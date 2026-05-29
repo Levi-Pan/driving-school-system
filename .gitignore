@@ -1,0 +1,16 @@
+target/
+.idea/
+*.iml
+
+uploads/
+logs/
+
+.env
+*.log
+
+*.class
+*.jar
+*.war
+
+.DS_Store
+Thumbs.db

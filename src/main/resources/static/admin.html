@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>驾校管理员端</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-role="admin">
+<aside class="sidebar">
+    <a class="brand" href="/">
+        <span class="brand-mark">管</span>
+        <div><strong>驾校管理员端</strong><small>审核 · 分配 · 统计</small></div>
+    </a>
+    <nav class="tabs">
+        <button class="tab active" data-view="dashboard">业务总览</button>
+        <button class="tab" data-view="review">报名审核</button>
+        <button class="tab" data-view="assign">教练分配</button>
+        <button class="tab" data-view="exam">考试成绩</button>
+        <button class="tab" data-view="stats">统计导出</button>
+    </nav>
+</aside>
+
+<main class="shell">
+    <header class="topbar">
+        <div><h1>驾校管理员端</h1><p>处理报名复审、材料生成、教练分配、考试审核和经营统计。</p></div>
+        <div class="top-actions">
+            <button class="ghost" id="logoutBtn">退出登录</button>
+            <button class="icon-btn" id="refreshBtn" title="刷新数据">↻</button>
+        </div>
+    </header>
+
+    <section id="dashboard" class="view active">
+        <div class="metrics" id="metricGrid"></div>
+        <section class="panel">
+            <div class="panel-title"><h2>学员业务队列</h2><span class="muted">全校学员状态</span></div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>学员</th><th>车型</th><th>状态</th><th>阶段</th><th>学时</th><th>自动初审</th></tr></thead>
+                    <tbody id="studentTable"></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+
+    <section id="review" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>报名复审与材料</h2><span class="muted">通过后自动生成报名表、体检表、准考证</span></div>
+            <div id="reviewList" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="assign" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>待分配学员</h2><span class="muted">系统按车型、空闲名额和评分推荐教练</span></div>
+            <div id="coachAssignList" class="item-list"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-title"><h2>教练资源</h2></div>
+            <div id="coachList" class="coach-grid"></div>
+        </section>
+    </section>
+
+    <section id="exam" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>考试审核与成绩录入</h2></div>
+            <div id="examList" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="stats" class="view">
+        <div class="layout two">
+            <section class="panel">
+                <div class="panel-title"><h2>报名趋势</h2><button class="ghost" data-export="registrationsByMonth">导出</button></div>
+                <canvas id="registrationChart" height="220"></canvas>
+            </section>
+            <section class="panel">
+                <div class="panel-title"><h2>科目合格率</h2><button class="ghost" data-export="subjectPassRates">导出</button></div>
+                <canvas id="passRateChart" height="220"></canvas>
+            </section>
+        </div>
+        <div class="layout two">
+            <section class="panel">
+                <div class="panel-title"><h2>教练工作量</h2><button class="ghost" data-export="coachWorkloads">导出</button></div>
+                <canvas id="coachChart" height="260"></canvas>
+            </section>
+            <section class="panel">
+                <div class="panel-title"><h2>状态分布</h2><button class="ghost" data-export="statusCounts">导出</button></div>
+                <div id="statusPills" class="status-pills"></div>
+            </section>
+        </div>
+    </section>
+</main>
+
+<dialog id="docDialog">
+    <div class="dialog-head"><h2 id="docTitle">材料预览</h2><button class="icon-btn" id="closeDoc" title="关闭">×</button></div>
+    <div id="docPreview" class="doc-preview"></div>
+    <div class="dialog-actions"><button class="ghost" id="exportDoc">导出 HTML</button><button class="primary" id="printDoc">打印 / 另存为 PDF</button></div>
+</dialog>
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

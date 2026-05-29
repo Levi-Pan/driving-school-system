@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学员端</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-role="student">
+<aside class="sidebar">
+    <a class="brand" href="/">
+        <span class="brand-mark">学</span>
+        <div><strong>学员端</strong><small>报名 · 约课 · 考试</small></div>
+    </a>
+    <nav class="tabs">
+        <button class="tab active" data-view="register">在线报名</button>
+        <button class="tab" data-view="status">我的进度</button>
+        <button class="tab" data-view="booking">约课</button>
+        <button class="tab" data-view="exam">考试报名</button>
+        <button class="tab" data-view="documents">材料打印</button>
+    </nav>
+</aside>
+
+<main class="shell">
+    <header class="topbar">
+        <div><h1>学员端</h1><p>在线报名、查看审核状态、约课、考试报名和材料打印。</p></div>
+        <div class="top-actions">
+            <button class="ghost" id="logoutBtn">退出登录</button>
+            <button class="icon-btn" id="refreshBtn" title="刷新数据">↻</button>
+        </div>
+    </header>
+
+    <section id="register" class="view active">
+        <div class="layout">
+            <section class="panel">
+                <div class="panel-title"><h2>在线报名</h2><span class="muted">提交后进入待审核</span></div>
+                <form id="applyForm" class="form-grid compact">
+                    <label>姓名<span class="readonly-value" id="applicationNameText">正在读取注册姓名...</span><input name="name" id="applicationName" type="hidden" required></label>
+                    <label>身份证<input name="idCard" required value="320105200201011234"></label>
+                    <label>电话<input name="phone" required value="13900009999"></label>
+                    <label>地址<input name="address" required value="南京市玄武区"></label>
+                    <label>报考车型<select name="vehicleType"><option>C1</option><option>C2</option></select></label>
+                    <label>年龄<input name="age" type="number" min="18" value="24"></label>
+                    <label class="check"><input name="licenseEligible" type="checkbox" checked> 准驾资格符合</label>
+                    <label>体检状态<select name="medicalStatus"><option>合格</option><option>待补充</option><option>不合格</option></select></label>
+                    <label class="upload-field">身份证照片
+                        <input name="idPhotoName" id="idPhotoName" type="hidden" required>
+                        <input id="idPhotoFile" type="file" accept="image/*" data-upload-target="idPhotoName" data-preview-target="idPhotoPreview">
+                        <span class="muted">选择图片后自动上传保存</span>
+                        <div class="upload-preview" id="idPhotoPreview">暂无已上传图片</div>
+                    </label>
+                    <label class="upload-field">体检表
+                        <input name="medicalFormName" id="medicalFormName" type="hidden" required>
+                        <input id="medicalFormFile" type="file" accept="image/*" data-upload-target="medicalFormName" data-preview-target="medicalFormPreview">
+                        <span class="muted">选择图片后自动上传保存</span>
+                        <div class="upload-preview" id="medicalFormPreview">暂无已上传图片</div>
+                    </label>
+                    <button class="primary" type="submit">提交报名</button>
+                </form>
+            </section>
+        </div>
+    </section>
+
+    <section id="status" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>我的学习进度</h2><label class="select-inline">选择学员<select id="studentPick"></select></label></div>
+            <div id="studentStatus" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="booking" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>在线约课 / 取消约课</h2></div>
+            <form id="lessonForm" class="form-grid">
+                <label>学员<select name="studentId" id="lessonStudent"></select></label>
+                <label>日期<input name="lessonDate" type="date"></label>
+                <label>时段<select name="timeRange"><option>09:00-11:00</option><option>14:00-16:00</option><option>18:00-20:00</option></select></label>
+                <label>备注<input name="note" value="在线约课"></label>
+                <button class="primary" type="submit">提交约课</button>
+            </form>
+            <div id="lessonList" class="item-list spaced"></div>
+        </section>
+    </section>
+
+    <section id="exam" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>考试报名与成绩</h2></div>
+            <form id="examForm" class="form-grid">
+                <label>学员<select name="studentId" id="examStudent"></select></label>
+                <label>科目<select name="subject"><option>科目一</option><option>科目二</option><option>科目三</option><option>科目四</option></select></label>
+                <label>考试时间<input name="examTime" type="datetime-local"></label>
+                <button class="primary" type="submit">报名考试</button>
+            </form>
+            <div id="studentExamList" class="item-list spaced"></div>
+        </section>
+    </section>
+
+    <section id="documents" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>报名材料预览打印</h2><label class="select-inline">选择学员<select id="documentStudent"></select></label></div>
+            <div class="actions left">
+                <button class="ghost" data-doc="registration">报名表</button>
+                <button class="ghost" data-doc="medical">体检表</button>
+                <button class="ghost" data-doc="ticket">准考证</button>
+            </div>
+        </section>
+    </section>
+</main>
+
+<dialog id="docDialog">
+    <div class="dialog-head"><h2 id="docTitle">材料预览</h2><button class="icon-btn" id="closeDoc" title="关闭">×</button></div>
+    <div id="docPreview" class="doc-preview"></div>
+    <div class="dialog-actions"><button class="ghost" id="exportDoc">导出 HTML</button><button class="primary" id="printDoc">打印 / 另存为 PDF</button></div>
+</dialog>
+<div id="toast"></div>
+<script>
+    (function () {
+        const nameInput = document.querySelector("#applicationName");
+        const nameText = document.querySelector("#applicationNameText");
+
+        function showName(name) {
+            if (!nameInput || !nameText) {
+                return;
+            }
+            nameInput.value = name || "";
+            nameText.textContent = name || "未获取到注册姓名，请重新登录";
+        }
+
+        function remember(account) {
+            if (!account) {
+                return;
+            }
+            localStorage.setItem("currentAccount", JSON.stringify({
+                username: account.username,
+                name: account.name,
+                role: account.role
+            }));
+        }
+
+        async function loadName() {
+            let remembered = null;
+            try {
+                remembered = JSON.parse(localStorage.getItem("currentAccount")) || null;
+                showName(remembered && remembered.name);
+            } catch (error) {
+                remembered = null;
+            }
+
+            try {
+                let account = null;
+                if (remembered && remembered.username) {
+                    const response = await fetch("/api/accounts/by-username/" + encodeURIComponent(remembered.username));
+                    if (response.ok) {
+                        account = await response.json();
+                    }
+                }
+                if (!account) {
+                    const response = await fetch("/api/auth/me");
+                    if (response.ok) {
+                        account = await response.json();
+                    }
+                }
+                remember(account);
+                showName(account && account.name);
+            } catch (error) {
+                showName(remembered && remembered.name);
+            }
+        }
+
+        loadName();
+    })();
+</script>
+<script src="/app.js"></script>
+</body>
+</html>

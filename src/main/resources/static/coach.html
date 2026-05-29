@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教练端</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-role="coach">
+<aside class="sidebar">
+    <a class="brand" href="/">
+        <span class="brand-mark">教</span>
+        <div><strong>教练端</strong><small>学员 · 学时 · 排班</small></div>
+    </a>
+    <nav class="tabs">
+        <button class="tab active" data-view="workbench">我的学员</button>
+        <button class="tab" data-view="progress">学时记录</button>
+        <button class="tab" data-view="schedule">约课安排</button>
+        <button class="tab" data-view="availability">空闲时间</button>
+    </nav>
+</aside>
+
+<main class="shell">
+    <header class="topbar">
+        <div><h1>教练端</h1><p>查看绑定学员、录入学时练车记录、维护空闲时间和查看约课安排。</p></div>
+        <div class="top-actions">
+            <button class="ghost" id="logoutBtn">退出登录</button>
+            <button class="icon-btn" id="refreshBtn" title="刷新数据">↻</button>
+        </div>
+    </header>
+
+    <section id="workbench" class="view active">
+        <section class="panel">
+            <div class="panel-title"><h2>我的学员</h2><label class="select-inline">选择教练<select id="coachPick"></select></label></div>
+            <div id="coachStudentList" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="progress" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>录入学时与练车记录</h2></div>
+            <form id="progressForm" class="form-grid">
+                <label>学员<select name="studentId" id="progressStudent"></select></label>
+                <label>新增学时<input name="hours" type="number" step="0.5" value="4"></label>
+                <label>阶段<select name="stage"><option>科目一学习</option><option>科目二训练</option><option>科目三训练</option><option>科目四学习</option></select></label>
+                <label class="wide">练车记录<input name="record" value="完成本阶段训练任务"></label>
+                <button class="primary" type="submit">保存进度</button>
+            </form>
+        </section>
+    </section>
+
+    <section id="schedule" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>约课安排</h2></div>
+            <div id="coachLessonList" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="availability" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>维护空闲时间</h2></div>
+            <form id="availabilityForm" class="form-grid compact">
+                <label>教练<select name="coachId" id="availabilityCoach"></select></label>
+                <label class="wide">空闲时间<input name="freeTimes" placeholder="例如：周一上午、周三下午、周六上午"></label>
+                <button class="primary" type="submit">保存空闲时间</button>
+            </form>
+            <div id="coachList" class="coach-grid spaced"></div>
+        </section>
+    </section>
+</main>
+
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
