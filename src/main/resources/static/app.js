@@ -46,7 +46,10 @@ function setupCommonActions() {
     $("#exportDoc")?.addEventListener("click", exportCurrentDoc);
     $$("[data-export]").forEach((button) => button.addEventListener("click", () => exportData(button.dataset.export)));
     $$("[data-doc]").forEach((button) => {
-        button.addEventListener("click", () => showDoc(Number($("#documentStudent").value), button.dataset.doc));
+        button.addEventListener("click", () => {
+            const student = currentAccountStudent();
+            showDoc(student?.id, button.dataset.doc);
+        });
     });
 }
 
@@ -68,8 +71,13 @@ function bindForms() {
 
     $("#lessonForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const student = currentAccountStudent();
+        if (!student) {
+            toast("请先完成在线报名");
+            return;
+        }
         const data = formData(event.target);
-        data.studentId = Number(data.studentId);
+        data.studentId = student.id;
         await api("/api/lessons", { method: "POST", body: data });
         toast("约课成功");
         await loadAll();
@@ -77,8 +85,13 @@ function bindForms() {
 
     $("#examForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const student = currentAccountStudent();
+        if (!student) {
+            toast("请先完成在线报名");
+            return;
+        }
         const data = formData(event.target);
-        data.studentId = Number(data.studentId);
+        data.studentId = student.id;
         await api("/api/exams/apply", { method: "POST", body: data });
         toast("考试报名已提交，等待管理员审核");
         await loadAll();
@@ -104,7 +117,6 @@ function bindForms() {
         await loadAll();
     });
 
-    $("#studentPick")?.addEventListener("change", renderStudentStatus);
     $("#coachPick")?.addEventListener("change", renderCoachViews);
 }
 
@@ -137,10 +149,12 @@ async function loadCurrentAccount() {
             rememberAccount(state.currentAccount);
             syncCurrentAccountToForms();
             syncApplicationMaterials();
+            refreshCurrentStudentViews();
             return;
         } catch (error) {
             syncCurrentAccountToForms();
             syncApplicationMaterials();
+            refreshCurrentStudentViews();
         }
     }
 
@@ -149,6 +163,7 @@ async function loadCurrentAccount() {
         rememberAccount(state.currentAccount);
         syncCurrentAccountToForms();
         syncApplicationMaterials();
+        refreshCurrentStudentViews();
     } catch (error) {
         toast("当前登录信息获取失败，请重新登录");
     }
@@ -188,6 +203,12 @@ function syncCurrentAccountToForms() {
         if (applicationNameText) {
             applicationNameText.textContent = "未获取到注册姓名，请重新登录";
         }
+    }
+}
+
+function refreshCurrentStudentViews() {
+    if (role === "student" && state.students.length) {
+        renderStudent();
     }
 }
 
@@ -442,9 +463,9 @@ function renderStudentStatus() {
     if (!$("#studentStatus")) {
         return;
     }
-    const student = selectedStudent("#studentPick");
+    const student = currentAccountStudent();
     if (!student) {
-        $("#studentStatus").innerHTML = `<p class="muted">暂无学员报名记录。</p>`;
+        $("#studentStatus").innerHTML = `<p class="muted">暂无你的报名记录，请先完成在线报名。</p>`;
         return;
     }
     const coach = state.coaches.find((item) => item.id === student.coachId);
@@ -465,8 +486,8 @@ function renderStudentLessons() {
     if (!$("#lessonList")) {
         return;
     }
-    const currentIds = state.students.map((student) => student.id);
-    const rows = state.lessons.filter((lesson) => currentIds.includes(lesson.studentId));
+    const student = currentAccountStudent();
+    const rows = student ? state.lessons.filter((lesson) => lesson.studentId === student.id) : [];
     $("#lessonList").innerHTML = rows.length ? rows.map((lesson) => `
         <article class="item">
             <div>
@@ -483,7 +504,9 @@ function renderStudentExams() {
     if (!$("#studentExamList")) {
         return;
     }
-    $("#studentExamList").innerHTML = state.exams.length ? state.exams.map((exam) => `
+    const student = currentAccountStudent();
+    const rows = student ? state.exams.filter((exam) => exam.studentId === student.id) : [];
+    $("#studentExamList").innerHTML = rows.length ? rows.map((exam) => `
         <article class="item single">
             <div>
                 <h3>${studentName(exam.studentId)} · ${exam.subject} ${statusTag(exam.status)}</h3>
@@ -626,7 +649,7 @@ async function scoreExam(id) {
 
 async function showDoc(studentId, type) {
     if (!studentId) {
-        toast("请先选择学员");
+        toast("请先完成在线报名");
         return;
     }
     const doc = await api(`/api/students/${studentId}/documents/${type}`);

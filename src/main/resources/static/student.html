@@ -63,7 +63,7 @@
 
     <section id="status" class="view">
         <section class="panel">
-            <div class="panel-title"><h2>我的学习进度</h2><label class="select-inline">选择学员<select id="studentPick"></select></label></div>
+            <div class="panel-title"><h2>我的学习进度</h2><span class="muted">当前登录学员</span></div>
             <div id="studentStatus" class="item-list"></div>
         </section>
     </section>
@@ -72,7 +72,6 @@
         <section class="panel">
             <div class="panel-title"><h2>在线约课 / 取消约课</h2></div>
             <form id="lessonForm" class="form-grid">
-                <label>学员<select name="studentId" id="lessonStudent"></select></label>
                 <label>日期<input name="lessonDate" type="date"></label>
                 <label>时段<select name="timeRange"><option>09:00-11:00</option><option>14:00-16:00</option><option>18:00-20:00</option></select></label>
                 <label>备注<input name="note" value="在线约课"></label>
@@ -86,7 +85,6 @@
         <section class="panel">
             <div class="panel-title"><h2>考试报名与成绩</h2></div>
             <form id="examForm" class="form-grid">
-                <label>学员<select name="studentId" id="examStudent"></select></label>
                 <label>科目<select name="subject"><option>科目一</option><option>科目二</option><option>科目三</option><option>科目四</option></select></label>
                 <label>考试时间<input name="examTime" type="datetime-local"></label>
                 <button class="primary" type="submit">报名考试</button>
@@ -97,7 +95,7 @@
 
     <section id="documents" class="view">
         <section class="panel">
-            <div class="panel-title"><h2>报名材料预览打印</h2><label class="select-inline">选择学员<select id="documentStudent"></select></label></div>
+            <div class="panel-title"><h2>报名材料预览打印</h2><span class="muted">当前登录学员</span></div>
             <div class="actions left">
                 <button class="ghost" data-doc="registration">报名表</button>
                 <button class="ghost" data-doc="medical">体检表</button>
