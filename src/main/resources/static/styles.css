@@ -463,6 +463,20 @@ button {
     font-size: 20px;
 }
 
+.icon-btn.spinning {
+    animation: spin-once 0.65s ease-in-out infinite;
+}
+
+@keyframes spin-once {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .table-wrap {
     overflow-x: auto;
 }

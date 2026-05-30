@@ -55,10 +55,9 @@ function setupCommonActions() {
 
 async function refreshPageData() {
     const button = $("#refreshBtn");
-    const originalText = button?.textContent;
     if (button) {
         button.disabled = true;
-        button.textContent = "⟳";
+        button.classList.add("spinning");
     }
     try {
         await loadCurrentAccount();
@@ -67,7 +66,7 @@ async function refreshPageData() {
     } finally {
         if (button) {
             button.disabled = false;
-            button.textContent = originalText || "↻";
+            button.classList.remove("spinning");
         }
     }
 }
