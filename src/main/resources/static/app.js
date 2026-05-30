@@ -39,7 +39,7 @@ function setupTabs() {
 }
 
 function setupCommonActions() {
-    $("#refreshBtn")?.addEventListener("click", loadAll);
+    $("#refreshBtn")?.addEventListener("click", refreshPageData);
     $("#logoutBtn")?.addEventListener("click", logout);
     $("#closeDoc")?.addEventListener("click", () => $("#docDialog").close());
     $("#printDoc")?.addEventListener("click", () => window.print());
@@ -51,6 +51,25 @@ function setupCommonActions() {
             showDoc(student?.id, button.dataset.doc);
         });
     });
+}
+
+async function refreshPageData() {
+    const button = $("#refreshBtn");
+    const originalText = button?.textContent;
+    if (button) {
+        button.disabled = true;
+        button.textContent = "⟳";
+    }
+    try {
+        await loadCurrentAccount();
+        await loadAll();
+        toast("页面数据已刷新");
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText || "↻";
+        }
+    }
 }
 
 function bindForms() {
