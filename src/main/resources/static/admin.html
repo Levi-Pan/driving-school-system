@@ -44,6 +44,17 @@
     </section>
 
     <section id="review" class="view">
+        <div class="filter-bar">
+            <div class="filter-tabs" id="reviewFilterTabs">
+                <button class="tab active" data-filter="all">全部</button>
+                <button class="tab" data-filter="待初审">待初审</button>
+                <button class="tab" data-filter="待复审">待复审</button>
+                <button class="tab" data-filter="初审驳回">初审驳回</button>
+                <button class="tab" data-filter="审核驳回">审核驳回</button>
+                <button class="tab" data-filter="审核通过">已通过</button>
+            </div>
+            <input type="text" id="reviewSearch" placeholder="搜索姓名/手机号/身份证号" class="search-input">
+        </div>
         <section class="panel">
             <div class="panel-title"><h2>报名复审与材料</h2><span class="muted">通过后自动生成报名表、体检表、准考证</span></div>
             <div id="reviewList" class="item-list"></div>
@@ -96,6 +107,20 @@
     <div class="dialog-head"><h2 id="docTitle">材料预览</h2><button class="icon-btn" id="closeDoc" title="关闭">×</button></div>
     <div id="docPreview" class="doc-preview"></div>
     <div class="dialog-actions"><button class="ghost" id="exportDoc">导出 HTML</button><button class="primary" id="printDoc">打印 / 另存为 PDF</button></div>
+</dialog>
+<dialog id="rejectDialog">
+    <div class="dialog-head"><h2>审核驳回</h2><button class="icon-btn" id="closeReject" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <label>驳回原因（必填）<textarea id="rejectReason" rows="4" placeholder="请输入驳回原因..."></textarea></label>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelReject">取消</button><button class="danger" id="confirmReject">确认驳回</button></div>
+</dialog>
+<dialog id="resultDialog">
+    <div class="dialog-head"><h2 id="resultTitle">提示</h2><button class="icon-btn" id="closeResult" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <p id="resultMessage"></p>
+    </div>
+    <div class="dialog-actions"><button class="primary" id="confirmResult">确定</button></div>
 </dialog>
 <div id="toast"></div>
 <script src="/app.js"></script>

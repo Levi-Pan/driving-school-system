@@ -570,6 +570,12 @@ th {
     justify-content: flex-start;
 }
 
+.actions-wrap {
+    display: grid;
+    grid-template-columns: auto;
+    justify-items: end;
+}
+
 .recommend-row {
     display: flex;
     flex-wrap: wrap;
@@ -709,6 +715,74 @@ dialog::backdrop {
     .actions {
         justify-content: flex-start;
     }
+}
+
+.review-reason {
+    color: var(--coral);
+    font-size: 13px;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.filter-tabs .tab {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.filter-tabs .tab.active {
+    background: var(--teal);
+    color: #fff;
+    border-color: var(--teal);
+}
+
+.search-input {
+    width: 260px;
+}
+
+.material-preview {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.material-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.dialog-body {
+    padding: 18px;
+}
+
+.dialog-body textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    resize: vertical;
+    font: inherit;
 }
 
 @media print {

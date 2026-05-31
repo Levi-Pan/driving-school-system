@@ -124,7 +124,10 @@ public class DrivingSchoolController {
     }
 
     @GetMapping("/students")
-    public List<Student> listStudents() {
+    public List<Student> listStudents(@RequestParam(required = false) String status) {
+        if (status != null && !status.isBlank()) {
+            return service.listStudentsByStatus(status);
+        }
         return service.listStudents();
     }
 
@@ -136,6 +139,11 @@ public class DrivingSchoolController {
     @PostMapping("/students/{id}/review")
     public Student reviewStudent(@PathVariable Long id, @RequestBody ReviewRequest request) {
         return service.reviewStudent(id, request);
+    }
+
+    @PostMapping("/students/{id}/resubmit")
+    public Student resubmitApplication(@PathVariable Long id, @RequestBody StudentApplicationRequest request) {
+        return service.resubmitApplication(id, request);
     }
 
     @GetMapping("/students/{id}/coach-recommendations")

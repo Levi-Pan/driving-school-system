@@ -144,8 +144,13 @@ public class DrivingSchoolService {
         student.setMedicalStatus(request.getMedicalStatus());
         student.setIdPhotoName(request.getIdPhotoName());
         student.setMedicalFormName(request.getMedicalFormName());
-        student.setStatus("待审核");
-        autoReview(student);
+        // 初始状态为"待初审"，自动初审后根据结果变更为"待复审"或"初审驳回"
+        student.setStatus("待初审");
+        if (autoReview(student)) {
+            student.setStatus("待复审");
+        } else {
+            student.setStatus("初审驳回");
+        }
         return studentRepository.save(student);
     }
 
@@ -157,19 +162,66 @@ public class DrivingSchoolService {
     }
 
     @Transactional(readOnly = true)
+    public List<Student> listStudentsByStatus(String status) {
+        return studentRepository.findByStatus(status).stream()
+                .sorted(Comparator.comparing(Student::getId).reversed())
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Student getStudent(Long id) {
         return requireStudent(id);
     }
 
     public Student reviewStudent(Long id, ReviewRequest request) {
         Student student = requireStudent(id);
+        // 状态守卫：只允许审核"待复审"状态的学员
+        if (!"待复审".equals(student.getStatus())) {
+            throw new IllegalArgumentException("当前学员状态为「" + student.getStatus() + "」，无法进行复审操作");
+        }
         if (request.isApproved()) {
             student.setStatus("待分配");
             student.setReviewOpinion(defaultText(request.getOpinion(), "复审通过"));
             generateMaterials(student);
         } else {
-            student.setStatus("审核不通过");
-            student.setReviewOpinion(defaultText(request.getOpinion(), "资料或资格不符合要求"));
+            // 驳回时必须填写原因
+            String opinion = request.getOpinion();
+            if (opinion == null || opinion.isBlank()) {
+                throw new IllegalArgumentException("驳回时必须填写驳回原因");
+            }
+            student.setStatus("审核驳回");
+            student.setReviewOpinion(opinion);
+        }
+        return studentRepository.save(student);
+    }
+
+    /**
+     * 学员重新提交报名申请（仅限"初审驳回"或"审核驳回"状态的学员）
+     */
+    public Student resubmitApplication(Long id, StudentApplicationRequest request) {
+        Student student = requireStudent(id);
+        String currentStatus = student.getStatus();
+        if (!"初审驳回".equals(currentStatus) && !"审核驳回".equals(currentStatus)) {
+            throw new IllegalArgumentException("当前学员状态为「" + currentStatus + "」，无法重新提交");
+        }
+        // 更新学员信息
+        student.setName(request.getName());
+        student.setIdCard(request.getIdCard());
+        student.setPhone(request.getPhone());
+        student.setAddress(request.getAddress());
+        student.setVehicleType(request.getVehicleType());
+        student.setLicenseEligible(request.isLicenseEligible());
+        student.setMedicalStatus(request.getMedicalStatus());
+        student.setIdPhotoName(request.getIdPhotoName());
+        student.setMedicalFormName(request.getMedicalFormName());
+        // 重置审核相关字段
+        student.setReviewOpinion("");
+        student.setStatus("待初审");
+        // 重新执行自动初审
+        if (autoReview(student)) {
+            student.setStatus("待复审");
+        } else {
+            student.setStatus("初审驳回");
         }
         return studentRepository.save(student);
     }
@@ -327,7 +379,11 @@ public class DrivingSchoolService {
         DashboardStats stats = new DashboardStats();
         List<Student> studentList = listStudents();
         stats.setTotalStudents(studentList.size());
-        stats.setPendingReview(studentList.stream().filter(s -> "待审核".equals(s.getStatus())).count());
+        long pendingInitial = studentList.stream().filter(s -> "待初审".equals(s.getStatus())).count();
+        long pendingRe = studentList.stream().filter(s -> "待复审".equals(s.getStatus())).count();
+        stats.setPendingInitialReview(pendingInitial);
+        stats.setPendingReReview(pendingRe);
+        stats.setPendingReview(pendingInitial + pendingRe);
         stats.setAssignedStudents(studentList.stream().filter(s -> s.getCoachId() != null).count());
         stats.setWaitingCertificate(studentList.stream().filter(s -> "等待发证".equals(s.getStatus())).count());
         stats.setRegistrationsByMonth(registrationsByMonth(studentList));
@@ -356,11 +412,40 @@ public class DrivingSchoolService {
         return doc;
     }
 
-    private void autoReview(Student student) {
+    private boolean autoReview(Student student) {
         List<String> failures = new ArrayList<>();
-        if (student.getAge() < 18 || student.getAge() > 70) {
-            failures.add("年龄不符合要求");
+
+        // 身份证号格式校验
+        String idCard = student.getIdCard();
+        if (idCard == null || !idCard.matches("^\\d{17}[\\dXx]$")) {
+            failures.add("身份证号格式不正确");
+        } else {
+            // 从身份证号自动计算年龄
+            try {
+                String birthStr = idCard.substring(6, 14);
+                int birthYear = Integer.parseInt(birthStr.substring(0, 4));
+                int birthMonth = Integer.parseInt(birthStr.substring(4, 6));
+                int birthDay = Integer.parseInt(birthStr.substring(6, 8));
+                LocalDate birthDate = LocalDate.of(birthYear, birthMonth, birthDay);
+                int age = LocalDate.now().getYear() - birthDate.getYear();
+                if (LocalDate.now().isBefore(birthDate.plusYears(age))) {
+                    age--;
+                }
+                student.setAge(age);
+                if (age < 18 || age > 70) {
+                    failures.add("年龄不符合要求（当前" + age + "岁，需18-70周岁）");
+                }
+            } catch (Exception e) {
+                failures.add("身份证号中的出生日期无法解析");
+            }
         }
+
+        // 手机号格式校验
+        String phone = student.getPhone();
+        if (phone == null || !phone.matches("^1\\d{10}$")) {
+            failures.add("手机号格式不正确");
+        }
+
         if (!student.isLicenseEligible()) {
             failures.add("准驾资格不符合要求");
         }
@@ -373,7 +458,10 @@ public class DrivingSchoolService {
         if (student.getMedicalFormName() == null || student.getMedicalFormName().isBlank()) {
             failures.add("体检表未上传");
         }
-        student.setAutoReviewResult(failures.isEmpty() ? "自动初审通过" : String.join("；", failures));
+
+        boolean passed = failures.isEmpty();
+        student.setAutoReviewResult(passed ? "自动初审通过" : String.join("；", failures));
+        return passed;
     }
 
     private void generateMaterials(Student student) {

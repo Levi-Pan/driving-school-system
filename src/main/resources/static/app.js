@@ -8,6 +8,11 @@ const state = {
     currentAccount: null
 };
 
+let reviewFilter = "all";
+let reviewSearchKeyword = "";
+let pendingRejectStudentId = null;
+let resultDialogCallback = null;
+
 const role = document.body.dataset.role;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -27,9 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupTabs() {
-    $$(".tab").forEach((tab) => {
+    $$("aside .tab").forEach((tab) => {
         tab.addEventListener("click", () => {
-            $$(".tab").forEach((item) => item.classList.remove("active"));
+            $$("aside .tab").forEach((item) => item.classList.remove("active"));
             $$(".view").forEach((view) => view.classList.remove("active"));
             tab.classList.add("active");
             $("#" + tab.dataset.view).classList.add("active");
@@ -50,6 +55,46 @@ function setupCommonActions() {
             const student = currentAccountStudent();
             showDoc(student?.id, button.dataset.doc);
         });
+    });
+    // 状态筛选事件绑定
+    $$("#reviewFilterTabs .tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+            $$("#reviewFilterTabs .tab").forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            reviewFilter = tab.dataset.filter;
+            renderReviewList();
+        });
+    });
+    $("#reviewSearch")?.addEventListener("input", (event) => {
+        reviewSearchKeyword = event.target.value.trim().toLowerCase();
+        renderReviewList();
+    });
+    // 驳回对话框事件绑定
+    $("#closeReject")?.addEventListener("click", () => {
+        $("#rejectDialog").close();
+        pendingRejectStudentId = null;
+    });
+    $("#cancelReject")?.addEventListener("click", () => {
+        $("#rejectDialog").close();
+        pendingRejectStudentId = null;
+    });
+    $("#confirmReject")?.addEventListener("click", confirmRejectStudent);
+    // 结果提示弹窗事件绑定
+    $("#closeResult")?.addEventListener("click", () => {
+        $("#resultDialog").close();
+        resultDialogCallback = null;
+    });
+    $("#confirmResult")?.addEventListener("click", async () => {
+        const callback = resultDialogCallback;
+        resultDialogCallback = null;
+        $("#resultDialog").close();
+        if (typeof callback === "function") {
+            try {
+                await callback();
+            } catch (e) {
+                /* 回调内部已处理错误 */
+            }
+        }
     });
 }
 
@@ -368,7 +413,8 @@ function renderMetrics() {
     }
     const metrics = [
         ["总报名人数", state.stats.totalStudents],
-        ["待审核", state.stats.pendingReview],
+        ["待初审", state.stats.pendingInitialReview],
+        ["待复审", state.stats.pendingReReview],
         ["已绑定教练", state.stats.assignedStudents],
         ["等待发证", state.stats.waitingCertificate]
     ];
@@ -397,23 +443,85 @@ function renderReviewList() {
     if (!$("#reviewList")) {
         return;
     }
-    $("#reviewList").innerHTML = state.students.map((student) => `
-        <article class="item">
-            <div>
-                <h3>${student.name} ${statusTag(student.status)}</h3>
-                <p>身份证：${student.idCard} · 车型：${student.vehicleType} · 体检：${student.medicalStatus}</p>
-                <p>自动初审：${student.autoReviewResult}</p>
-                <p>材料：报名表 ${yesNo(student.registrationFormGenerated)} / 体检表 ${yesNo(student.medicalFormGenerated)} / 准考证 ${yesNo(student.admissionTicketGenerated)}</p>
-            </div>
-            <div class="actions">
-                <button class="primary" onclick="reviewStudent(${student.id}, true)">通过</button>
-                <button class="danger" onclick="reviewStudent(${student.id}, false)">不通过</button>
-                <button class="ghost" onclick="showDoc(${student.id}, 'registration')">报名表</button>
-                <button class="ghost" onclick="showDoc(${student.id}, 'medical')">体检表</button>
-                <button class="ghost" onclick="showDoc(${student.id}, 'ticket')">准考证</button>
-            </div>
-        </article>
-    `).join("");
+
+    // 已通过审核的状态列表（这些状态代表审核已通过）
+    const approvedStatuses = ["待分配", "学习中", "可报名考试", "考试报名待审", "待考试", "等待发证", "补考安排中"];
+
+    // 筛选学员
+    let filtered = state.students;
+
+    // 按状态筛选
+    if (reviewFilter !== "all") {
+        if (reviewFilter === "审核通过") {
+            filtered = filtered.filter((s) => approvedStatuses.includes(s.status));
+        } else {
+            filtered = filtered.filter((s) => s.status === reviewFilter);
+        }
+    }
+
+    // 按关键词搜索
+    if (reviewSearchKeyword) {
+        filtered = filtered.filter((s) =>
+            (s.name && s.name.toLowerCase().includes(reviewSearchKeyword)) ||
+            (s.phone && s.phone.toLowerCase().includes(reviewSearchKeyword)) ||
+            (s.idCard && s.idCard.toLowerCase().includes(reviewSearchKeyword))
+        );
+    }
+
+    if (!filtered.length) {
+        $("#reviewList").innerHTML = `<p class="muted">暂无符合条件的学员记录。</p>`;
+        return;
+    }
+
+    $("#reviewList").innerHTML = filtered.map((student) => {
+        const isPendingReReview = student.status === "待复审";
+        const isRejected = student.status === "初审驳回" || student.status === "审核驳回";
+        const isApproved = approvedStatuses.includes(student.status);
+
+        // 构建操作按钮 — 所有学员都显示审核按钮
+        let actions = "";
+        actions += `<div class="actions"><button class="primary" onclick="reviewStudent(${student.id}, true)">通过</button>`;
+        actions += `<button class="danger" onclick="reviewStudent(${student.id}, false)">不通过</button></div>`;
+        if (isApproved && student.registrationFormGenerated) {
+            actions += `<div class="actions" style="margin-top:6px"><button class="ghost" onclick="showDoc(${student.id}, 'registration')">报名表</button>`;
+            actions += `<button class="ghost" onclick="showDoc(${student.id}, 'medical')">体检表</button>`;
+            actions += `<button class="ghost" onclick="showDoc(${student.id}, 'ticket')">准考证</button></div>`;
+        }
+
+        // 材料图片预览（只显示真正上传过的文件，跳过种子数据假文件名）
+        let materialImgs = "";
+        const hasUploadedIdPhoto = student.idPhotoName && student.idPhotoName.startsWith("/uploads/");
+        const hasUploadedMedical = student.medicalFormName && student.medicalFormName.startsWith("/uploads/");
+        if (hasUploadedIdPhoto || hasUploadedMedical) {
+            materialImgs = `<div class="material-preview">`;
+            if (hasUploadedIdPhoto) {
+                materialImgs += `<img src="${student.idPhotoName}" alt="身份证照片" title="身份证照片" onclick="window.open('${student.idPhotoName}')">`;
+            }
+            if (hasUploadedMedical) {
+                materialImgs += `<img src="${student.medicalFormName}" alt="体检表" title="体检表" onclick="window.open('${student.medicalFormName}')">`;
+            }
+            materialImgs += `</div>`;
+        }
+
+        // 驳回原因显示
+        let rejectReason = "";
+        if (isRejected && student.reviewOpinion) {
+            rejectReason = `<p class="review-reason">驳回原因：${student.reviewOpinion}</p>`;
+        }
+
+        return `
+            <article class="item">
+                <div>
+                    <h3>${student.name} ${statusTag(student.status)}</h3>
+                    <p>身份证：${student.idCard} · 手机：${student.phone} · 车型：${student.vehicleType} · 体检：${student.medicalStatus}</p>
+                    <p>自动初审：${student.autoReviewResult}</p>
+                    ${rejectReason}
+                    ${materialImgs}
+                </div>
+                ${actions ? `<div class="actions-wrap">${actions}</div>` : ""}
+            </article>
+        `;
+    }).join("");
 }
 
 function renderCoachAssignment() {
@@ -615,11 +723,89 @@ function fillCoachSelects() {
     });
 }
 
+function showResultDialog(title, message, callback) {
+    const dialog = $("#resultDialog");
+    if (!dialog) {
+        alert(title + "\n" + message);
+        return;
+    }
+    $("#resultTitle").textContent = title;
+    $("#resultMessage").textContent = message;
+    resultDialogCallback = (typeof callback === "function") ? callback : null;
+    dialog.showModal();
+}
+
 async function reviewStudent(id, approved) {
-    const opinion = approved ? "复审通过，自动生成报名材料" : "管理员复审不通过";
-    await api(`/api/students/${id}/review`, { method: "POST", body: { approved, opinion } });
-    toast(approved ? "复审通过，材料已生成" : "已标记审核不通过");
-    await loadAll();
+    // 先检查学员当前状态
+    const student = state.students.find((s) => s.id === id);
+    if (!student) {
+        showResultDialog("操作失败", "未找到该学员信息");
+        return;
+    }
+    if (student.status !== "待复审") {
+        showResultDialog("无法操作", "该学员已审核过，当前状态为「" + student.status + "」，不能重复审核。");
+        return;
+    }
+    if (approved) {
+        // 通过操作：弹出确认窗口，点确定后执行
+        showResultDialog("确认审核通过", "确定要通过学员「" + student.name + "」的报名审核吗？通过后将自动生成报名材料。", async () => {
+            // 再次检查状态（防止在弹窗等待期间状态已改变）
+            const currentStudent = state.students.find((s) => s.id === id);
+            if (!currentStudent || currentStudent.status !== "待复审") {
+                showResultDialog("无法操作", "该学员当前状态已变更，不能进行审核操作。");
+                return;
+            }
+            try {
+                await api(`/api/students/${id}/review`, { method: "POST", body: { approved: true, opinion: "复审通过" } });
+                showResultDialog("操作成功", "学员「" + student.name + "」的报名审核已通过，报名材料已自动生成。");
+                await loadAll();
+            } catch (error) {
+                showResultDialog("操作失败", error.message || "审核操作失败，请重试。");
+            }
+        });
+    } else {
+        // 驳回操作：打开驳回原因输入对话框
+        pendingRejectStudentId = id;
+        $("#rejectReason").value = "";
+        $("#rejectDialog").showModal();
+    }
+}
+
+async function confirmRejectStudent() {
+    const reason = $("#rejectReason").value.trim();
+    if (!reason) {
+        toast("请填写驳回原因");
+        return;
+    }
+    const id = pendingRejectStudentId;
+    if (!id) {
+        return;
+    }
+    // 前端状态检查：防止重复提交
+    const student = state.students.find((s) => s.id === id);
+    if (!student) {
+        $("#rejectDialog").close();
+        pendingRejectStudentId = null;
+        showResultDialog("操作失败", "未找到该学员信息");
+        return;
+    }
+    if (student.status !== "待复审") {
+        $("#rejectDialog").close();
+        pendingRejectStudentId = null;
+        showResultDialog("无法操作", "该学员当前状态为「" + student.status + "」，已不能进行驳回操作。");
+        return;
+    }
+    try {
+        await api(`/api/students/${id}/review`, { method: "POST", body: { approved: false, opinion: reason } });
+        $("#rejectDialog").close();
+        pendingRejectStudentId = null;
+        showResultDialog("审核驳回成功", "已驳回学员「" + student.name + "」的报名申请，驳回原因：" + reason);
+        await loadAll();
+    } catch (error) {
+        $("#rejectDialog").close();
+        pendingRejectStudentId = null;
+        showResultDialog("操作失败", error.message || "审核操作失败，请重试。");
+    }
 }
 
 async function loadRecommendations(studentId) {
@@ -772,7 +958,7 @@ function selectedCoach(selector) {
 }
 
 function statusTag(status) {
-    const cls = status.includes("不通过") || status.includes("补考") ? "bad" : status.includes("待") ? "warn" : "";
+    const cls = status.includes("驳回") || status.includes("不通过") || status.includes("补考") ? "bad" : status.includes("待") ? "warn" : "";
     return `<span class="tag ${cls}">${status}</span>`;
 }
 

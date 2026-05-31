@@ -6,6 +6,8 @@ import java.util.Map;
 public class DashboardStats {
     private long totalStudents;
     private long pendingReview;
+    private long pendingInitialReview;
+    private long pendingReReview;
     private long assignedStudents;
     private long waitingCertificate;
     private Map<String, Long> registrationsByMonth;
@@ -27,6 +29,22 @@ public class DashboardStats {
 
     public void setPendingReview(long pendingReview) {
         this.pendingReview = pendingReview;
+    }
+
+    public long getPendingInitialReview() {
+        return pendingInitialReview;
+    }
+
+    public void setPendingInitialReview(long pendingInitialReview) {
+        this.pendingInitialReview = pendingInitialReview;
+    }
+
+    public long getPendingReReview() {
+        return pendingReReview;
+    }
+
+    public void setPendingReReview(long pendingReReview) {
+        this.pendingReReview = pendingReReview;
     }
 
     public long getAssignedStudents() {
