@@ -6,7 +6,7 @@ const state = {
     stats: null,
     currentDoc: null,
     currentAccount: null
-};
+};//用于测试注释
 
 let reviewFilter = "all";
 let reviewSearchKeyword = "";
