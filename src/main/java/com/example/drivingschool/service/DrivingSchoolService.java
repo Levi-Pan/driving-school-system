@@ -21,7 +21,6 @@ import com.example.drivingschool.repository.CoachRepository;
 import com.example.drivingschool.repository.ExamRecordRepository;
 import com.example.drivingschool.repository.LessonBookingRepository;
 import com.example.drivingschool.repository.StudentRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -61,7 +60,6 @@ public class DrivingSchoolService {
         this.examRecordRepository = examRecordRepository;
     }
 
-    @PostConstruct
     public void seed() {
         if (coachRepository.count() > 0 || studentRepository.count() > 0) {
             return;
