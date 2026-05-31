@@ -18,33 +18,37 @@ import com.example.drivingschool.model.ExamRecord;
 import com.example.drivingschool.model.LessonBooking;
 import com.example.drivingschool.model.Student;
 import com.example.drivingschool.service.DrivingSchoolService;
+import com.example.drivingschool.storage.MaterialResource;
+import com.example.drivingschool.storage.MaterialStorageService;
+import com.example.drivingschool.storage.StoredMaterial;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api")
 public class DrivingSchoolController {
     private final DrivingSchoolService service;
+    private final MaterialStorageService materialStorageService;
 
-    public DrivingSchoolController(DrivingSchoolService service) {
+    public DrivingSchoolController(DrivingSchoolService service, MaterialStorageService materialStorageService) {
         this.service = service;
+        this.materialStorageService = materialStorageService;
     }
 
     @PostMapping("/accounts/register")
@@ -82,45 +86,26 @@ public class DrivingSchoolController {
 
     @PostMapping("/materials/upload")
     public Map<String, String> uploadMaterial(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("请选择要上传的图片");
-        }
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("只能上传图片文件");
-        }
-        String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
-        String extension = extensionOf(original, contentType);
-        Path dir = Paths.get("uploads", "materials").toAbsolutePath().normalize();
-        Files.createDirectories(dir);
-        String filename = UUID.randomUUID() + extension;
-        Path target = dir.resolve(filename).normalize();
-        file.transferTo(target);
+        StoredMaterial material = materialStorageService.save(file);
         return Map.of(
-                "fileName", original.isBlank() ? filename : original,
-                "url", "/uploads/materials/" + filename
+                "fileName", material.fileName(),
+                "url", material.url()
         );
+    }
+
+    @GetMapping("/materials/file")
+    public ResponseEntity<byte[]> materialFile(@RequestParam("key") String key) throws IOException {
+        MaterialResource resource = materialStorageService.load(key);
+        String contentType = resource.contentType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : resource.contentType();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
+                .body(resource.content());
     }
 
     @PostMapping("/students/apply")
     public Student submitApplication(@RequestBody StudentApplicationRequest request) {
         return service.submitApplication(request);
-    }
-
-    private String extensionOf(String filename, String contentType) {
-        int dot = filename.lastIndexOf('.');
-        if (dot >= 0 && dot < filename.length() - 1) {
-            String extension = filename.substring(dot).toLowerCase();
-            if (Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp").contains(extension)) {
-                return extension;
-            }
-        }
-        return switch (contentType) {
-            case "image/png" -> ".png";
-            case "image/gif" -> ".gif";
-            case "image/webp" -> ".webp";
-            default -> ".jpg";
-        };
     }
 
     @GetMapping("/students")
