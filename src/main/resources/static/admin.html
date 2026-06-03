@@ -15,6 +15,7 @@
     <nav class="tabs">
         <button class="tab active" data-view="dashboard">业务总览</button>
         <button class="tab" data-view="review">报名审核</button>
+        <button class="tab" data-view="coachManage">教练管理</button>
         <button class="tab" data-view="assign">教练分配</button>
         <button class="tab" data-view="exam">考试成绩</button>
         <button class="tab" data-view="stats">统计导出</button>
@@ -58,6 +59,13 @@
         <section class="panel">
             <div class="panel-title"><h2>报名复审与材料</h2><span class="muted">通过后自动生成报名表、体检表、准考证</span></div>
             <div id="reviewList" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="coachManage" class="view">
+        <section class="panel">
+            <div class="panel-title"><h2>教练管理</h2><button class="primary" id="addCoachBtn">新增教练</button></div>
+            <div id="coachManageList" class="coach-grid"></div>
         </section>
     </section>
 
@@ -122,7 +130,23 @@
     </div>
     <div class="dialog-actions"><button class="primary" id="confirmResult">确定</button></div>
 </dialog>
+<dialog id="coachFormDialog">
+    <div class="dialog-head"><h2 id="coachFormTitle">新增教练</h2><button class="icon-btn" id="closeCoachForm" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <div class="form-grid compact">
+            <label>姓名（必填）<input type="text" id="coachName" placeholder="教练姓名"></label>
+            <label>手机号<input type="text" id="coachPhone" placeholder="联系电话"></label>
+            <label>教学车型<input type="text" id="coachVehicleType" placeholder="C1 / C2 / B2" value="C1"></label>
+            <label>最大带教人数<input type="number" id="coachMaxStudents" value="5" min="1"></label>
+            <label>性别<select id="coachGender"><option value="">未设置</option><option value="男">男</option><option value="女">女</option></select></label>
+            <label>从业年限<input type="number" id="coachYears" value="0" min="0"></label>
+        </div>
+        <label class="wide" style="margin-top:12px">个人简介<textarea id="coachBio" rows="3" placeholder="教练简介..."></textarea></label>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelCoachForm">取消</button><button class="primary" id="submitCoachForm">保存</button></div>
+</dialog>
 <div id="toast"></div>
-<script src="/app.js"></script>
+<script src="/common.js"></script>
+<script src="/admin.js"></script>
 </body>
 </html>
