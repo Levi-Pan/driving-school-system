@@ -11,6 +11,8 @@ import com.example.drivingschool.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -86,8 +88,9 @@ public class CoachService {
             throw new IllegalArgumentException("无效的教练状态：" + status);
         }
         Coach coach = requireCoach(id);
+        String oldStatus = coach.getStatus();
         coach.setStatus(status);
-        if ("离职".equals(status)) {
+        if ("离职".equals(status) && !"离职".equals(oldStatus)) {
             for (Long studentId : coach.getStudentIds()) {
                 studentRepository.findById(studentId).ifPresent(student -> {
                     student.setCoachId(null);
@@ -111,8 +114,8 @@ public class CoachService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new NoSuchElementException("学员不存在：" + studentId));
         return coachRepository.findAll().stream()
-                .filter(coach -> "在岗".equals(coach.getStatus()))
-                .filter(coach -> coach.getVehicleType().equals(student.getVehicleType()))
+                .filter(coach -> coach.getStatus() == null || "在岗".equals(coach.getStatus()))
+                .filter(coach -> coach.getVehicleType() != null && coach.getVehicleType().equals(student.getVehicleType()))
                 .filter(coach -> coach.getFreeSlots() > 0)
                 .map(coach -> {
                     double score = coach.getRating() * 20 + coach.getFreeSlots() * 10 - coach.getWorkload() * 2;
@@ -133,13 +136,48 @@ public class CoachService {
         if (coach.getFreeSlots() <= 0) {
             throw new IllegalArgumentException("该教练当前没有空闲名额");
         }
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String oldCoachName = null;
+        Long oldCoachId = student.getCoachId();
+        if (oldCoachId != null) {
+            Coach oldCoach = requireCoach(oldCoachId);
+            oldCoachName = oldCoach.getName();
+            oldCoach.getStudentIds().remove(studentId);
+            coachRepository.save(oldCoach);
+        }
         student.setCoachId(coachId);
         student.setStatus("学习中");
         if (!coach.getStudentIds().contains(studentId)) {
             coach.getStudentIds().add(studentId);
         }
-        student.getProgressLogs().add("已分配教练：" + coach.getName());
+        String logMsg;
+        if (oldCoachName != null) {
+            logMsg = timestamp + " 换教练：" + oldCoachName + " → " + coach.getName();
+        } else {
+            logMsg = timestamp + " 分配教练：" + coach.getName();
+        }
+        student.getCoachChangeLogs().add(logMsg);
+        student.getProgressLogs().add(logMsg);
         coachRepository.save(coach);
+        return studentRepository.save(student);
+    }
+
+    public Student unbindCoach(Long studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new NoSuchElementException("学员不存在：" + studentId));
+        if (student.getCoachId() == null) {
+            throw new IllegalArgumentException("该学员当前没有绑定教练");
+        }
+        Long oldCoachId = student.getCoachId();
+        Coach oldCoach = requireCoach(oldCoachId);
+        String logMsg = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                + " 解绑教练：" + oldCoach.getName() + "（管理员操作）";
+        oldCoach.getStudentIds().remove(studentId);
+        coachRepository.save(oldCoach);
+        student.setCoachId(null);
+        student.setStatus("待分配");
+        student.getCoachChangeLogs().add(logMsg);
+        student.getProgressLogs().add(logMsg);
         return studentRepository.save(student);
     }
 

@@ -63,12 +63,16 @@ function renderStudentStatus() {
         return;
     }
     const coach = state.coaches.find((item) => item.id === student.coachId);
+    const isRejected = student.status === "初审驳回" || student.status === "审核驳回";
+    const rejectReason = (isRejected && student.reviewOpinion)
+        ? `<p style="color:var(--coral)">驳回原因：${student.reviewOpinion}</p>` : "";
     $("#studentStatus").innerHTML = `
         <article class="item single">
             <div>
                 <h3>${student.name} ${statusTag(student.status)}</h3>
                 <p>报考车型：${student.vehicleType} · 学习阶段：${student.stage} · 已完成学时：${student.hours}</p>
                 <p>自动初审：${student.autoReviewResult}</p>
+                ${rejectReason}
                 <p>教练：${coach ? `${coach.name}（${coach.phone}，评分 ${coach.rating}）` : "暂未分配"}</p>
                 <p>最近记录：${(student.progressLogs || []).slice(-3).join(" / ") || "暂无练车记录"}</p>
             </div>

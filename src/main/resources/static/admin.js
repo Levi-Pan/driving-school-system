@@ -7,6 +7,9 @@ let pendingRejectStudentId = null;
 let coachFormMode = "create";
 let coachFormEditId = null;
 
+let assignFilter = "pending";
+let reassignStudentId = null;
+
 // ========== Admin-Specific Bindings ==========
 
 function setupAdminActions() {
@@ -38,6 +41,18 @@ function setupAdminActions() {
     $("#closeCoachForm")?.addEventListener("click", () => $("#coachFormDialog").close());
     $("#cancelCoachForm")?.addEventListener("click", () => $("#coachFormDialog").close());
     $("#submitCoachForm")?.addEventListener("click", submitCoachForm);
+    // 教练分配 tab 切换
+    $$("#assignFilterTabs .tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+            $$("#assignFilterTabs .tab").forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            assignFilter = tab.dataset.filter;
+            toggleAssignView();
+        });
+    });
+    // 换教练弹窗事件绑定
+    $("#closeReassign")?.addEventListener("click", () => $("#reassignDialog").close());
+    $("#cancelReassign")?.addEventListener("click", () => $("#reassignDialog").close());
 }
 
 function bindAdminForms() {
@@ -52,6 +67,7 @@ function renderAdmin() {
     renderReviewList();
     renderCoachManage();
     renderCoachAssignment();
+    renderAssignedList();
     renderCoachCards();
     renderAdminExamList();
     renderStatusPills();
@@ -180,18 +196,155 @@ function renderCoachAssignment() {
         return;
     }
     const waiting = state.students.filter((student) => student.status === "待分配");
-    $("#coachAssignList").innerHTML = waiting.length ? waiting.map((student) => `
+    if (!waiting.length) {
+        $("#coachAssignList").innerHTML = `<p class="muted">暂无待分配学员。</p>`;
+        return;
+    }
+    // 教练下拉选项（在岗 + 有空闲名额）
+    const coachOptions = state.coaches
+        .map((c) => `<option value="${c.id}">${c.name} · ${c.vehicleType || "未知"} · 空闲${c.freeSlots}${c.status && c.status !== "在岗" ? "（" + c.status + "）" : ""}</option>`)
+        .join("");
+    $("#coachAssignList").innerHTML = waiting.map((student) => `
         <article class="item">
             <div>
                 <h3>${student.name} · ${student.vehicleType}</h3>
-                <p>点击推荐后，系统会按车型、空闲名额和评分排序。</p>
+                <p>点击「推荐教练」查看系统推荐，或从下拉框手动指定。</p>
                 <div id="recommend-${student.id}" class="muted">等待生成推荐</div>
             </div>
-            <div class="actions">
+            <div class="actions" style="flex-direction:column;gap:6px">
                 <button class="primary" onclick="loadRecommendations(${student.id})">推荐教练</button>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <select id="manualCoach-${student.id}" style="min-width:140px;font-size:.9em">
+                        <option value="">选择教练…</option>
+                        ${coachOptions}
+                    </select>
+                    <button class="ghost" onclick="manualAssignCoach(${student.id})">指定</button>
+                </div>
             </div>
         </article>
-    `).join("") : `<p class="muted">暂无待分配学员。</p>`;
+    `).join("");
+}
+
+async function manualAssignCoach(studentId) {
+    const select = $(`#manualCoach-${studentId}`);
+    if (!select || !select.value) {
+        toast("请先选择一位教练");
+        return;
+    }
+    const coachId = Number(select.value);
+    const coach = state.coaches.find((c) => c.id === coachId);
+    const student = state.students.find((s) => s.id === studentId);
+    showResultDialog("确认指定", `确定将教练「${coach?.name || ""}」指定给学员「${student?.name || ""}」吗？`, async () => {
+        try {
+            await api(`/api/students/${studentId}/assign-coach`, { method: "POST", body: { coachId } });
+            showResultDialog("分配成功", `学员「${student?.name}」已绑定教练「${coach?.name}」。`);
+            await loadAll();
+        } catch (error) {
+            showResultDialog("分配失败", error.message || "手动指定教练失败。");
+        }
+    });
+}
+
+function toggleAssignView() {
+    const pending = $("#coachAssignList");
+    const assigned = $("#assignedList");
+    if (!pending || !assigned) return;
+    if (assignFilter === "pending") {
+        pending.style.display = "";
+        assigned.style.display = "none";
+    } else {
+        pending.style.display = "none";
+        assigned.style.display = "";
+    }
+}
+
+function renderAssignedList() {
+    if (!$("#assignedList")) {
+        return;
+    }
+    const assigned = state.students.filter((s) => s.coachId != null && s.status !== "待分配");
+    if (!assigned.length) {
+        $("#assignedList").innerHTML = `<p class="muted">暂无已分配教练的学员。</p>`;
+        return;
+    }
+    $("#assignedList").innerHTML = assigned.map((student) => {
+        const coach = state.coaches.find((c) => c.id === student.coachId);
+        const coachName = coach ? coach.name : "未知教练";
+        const logs = (student.coachChangeLogs || []).slice().reverse();
+        const logHtml = logs.length
+            ? `<details class="change-log-details"><summary>换教练记录（${logs.length}条）</summary><ul>${logs.map(l => `<li>${l}</li>`).join("")}</ul></details>`
+            : "";
+        return `
+        <article class="item">
+            <div>
+                <h3>${student.name} · ${student.vehicleType} ${statusTag(student.status)}</h3>
+                <p>当前教练：<strong>${coachName}</strong> · 阶段：${student.stage} · 学时：${student.hours}</p>
+                ${logHtml}
+            </div>
+            <div class="actions">
+                <button class="ghost" onclick="openReassignDialog(${student.id})">换教练</button>
+                <button class="danger" onclick="unbindCoach(${student.id})">解绑</button>
+            </div>
+        </article>`;
+    }).join("");
+}
+
+async function unbindCoach(studentId) {
+    const student = state.students.find((s) => s.id === studentId);
+    if (!student) return;
+    const coach = state.coaches.find((c) => c.id === student.coachId);
+    const coachName = coach ? coach.name : "未知教练";
+    showResultDialog("确认解绑", `确定要解绑学员「${student.name}」与教练「${coachName}」的绑定关系吗？解绑后学员将回到待分配状态。`, async () => {
+        try {
+            await api(`/api/students/${studentId}/unbind-coach`, { method: "POST" });
+            showResultDialog("解绑成功", `学员「${student.name}」已与教练「${coachName}」解绑，学员状态已变更为待分配。`);
+            await loadAll();
+        } catch (error) {
+            showResultDialog("操作失败", error.message || "解绑教练失败。");
+        }
+    });
+}
+
+async function openReassignDialog(studentId) {
+    const student = state.students.find((s) => s.id === studentId);
+    if (!student) return;
+    reassignStudentId = studentId;
+    const oldCoach = state.coaches.find((c) => c.id === student.coachId);
+    const oldCoachName = oldCoach ? oldCoach.name : "未知教练";
+    $("#reassignTitle").textContent = "换教练 — " + student.name;
+    $("#reassignInfo").textContent = `当前教练：${oldCoachName} · 报考车型：${student.vehicleType}`;
+    $("#reassignRecommendations").innerHTML = `<p class="muted">正在加载推荐教练…</p>`;
+    $("#reassignDialog").showModal();
+    try {
+        const recommendations = await api(`/api/students/${studentId}/coach-recommendations`);
+        if (!recommendations.length) {
+            $("#reassignRecommendations").innerHTML = `<p class="muted">暂无匹配教练（需车型一致、在岗、有空闲名额）。</p>`;
+            return;
+        }
+        $("#reassignRecommendations").innerHTML = recommendations.map((item) => `
+            <div class="recommend-row">
+                <span>${item.coach.name} · 推荐分 ${item.score} · ${item.reason}</span>
+                <button class="primary" onclick="confirmReassign(${item.coach.id})">确认换绑</button>
+            </div>
+        `).join("");
+    } catch (error) {
+        $("#reassignRecommendations").innerHTML = `<p class="muted">加载失败：${error.message}</p>`;
+    }
+}
+
+async function confirmReassign(newCoachId) {
+    if (!reassignStudentId) return;
+    const student = state.students.find((s) => s.id === reassignStudentId);
+    const studentName = student ? student.name : "";
+    try {
+        await api(`/api/students/${reassignStudentId}/assign-coach`, { method: "POST", body: { coachId: newCoachId } });
+        $("#reassignDialog").close();
+        showResultDialog("换教练成功", `学员「${studentName}」的教练已更换，换绑记录已保存。`);
+        reassignStudentId = null;
+        await loadAll();
+    } catch (error) {
+        showResultDialog("操作失败", error.message || "换教练失败。");
+    }
 }
 
 function renderCoachCards() {
@@ -200,8 +353,8 @@ function renderCoachCards() {
     }
     $("#coachList").innerHTML = state.coaches.map((coach) => `
         <article class="coach-card">
-            <strong>${coach.name}</strong>
-            <span>${coach.vehicleType} · 评分 ${coach.rating}</span>
+            <strong>${coach.name} ${coachStatusTag(coach.status || "在岗")}</strong>
+            <span>${coach.vehicleType || "未知"} · 评分 ${coach.rating}</span>
             <span>带学员 ${coach.workload}/${coach.maxStudents} · 空闲 ${coach.freeSlots}</span>
             <span>${(coach.freeTimes || []).join("、") || "暂未维护空闲时间"}</span>
         </article>
@@ -312,24 +465,34 @@ async function confirmRejectStudent() {
 }
 
 async function loadRecommendations(studentId) {
-    const recommendations = await api(`/api/students/${studentId}/coach-recommendations`);
     const box = $(`#recommend-${studentId}`);
-    if (!recommendations.length) {
-        box.innerHTML = "暂无匹配教练";
-        return;
+    if (!box) return;
+    box.innerHTML = `<p class="muted">正在加载推荐…</p>`;
+    try {
+        const recommendations = await api(`/api/students/${studentId}/coach-recommendations`);
+        if (!recommendations.length) {
+            box.innerHTML = `<p class="muted">暂无匹配教练（需车型一致、在岗、有空闲名额）。</p>`;
+        } else {
+            box.innerHTML = recommendations.map((item) => `
+                <div class="recommend-row">
+                    <span>${item.coach.name} · 推荐分 ${item.score} · ${item.reason}</span>
+                    <button class="ghost" onclick="assignCoach(${studentId}, ${item.coach.id})">确认分配</button>
+                </div>
+            `).join("");
+        }
+    } catch (error) {
+        box.innerHTML = `<p class="muted" style="color:#842029">加载失败：${error.message}</p>`;
     }
-    box.innerHTML = recommendations.map((item) => `
-        <div class="recommend-row">
-            <span>${item.coach.name} · 推荐分 ${item.score} · ${item.reason}</span>
-            <button class="ghost" onclick="assignCoach(${studentId}, ${item.coach.id})">确认分配</button>
-        </div>
-    `).join("");
 }
 
 async function assignCoach(studentId, coachId) {
-    await api(`/api/students/${studentId}/assign-coach`, { method: "POST", body: { coachId } });
-    toast("教练分配完成，学员与教练已绑定");
-    await loadAll();
+    try {
+        await api(`/api/students/${studentId}/assign-coach`, { method: "POST", body: { coachId } });
+        showResultDialog("分配成功", "教练分配完成，学员与教练已绑定。");
+        await loadAll();
+    } catch (error) {
+        showResultDialog("分配失败", error.message || "教练分配失败。");
+    }
 }
 
 async function approveExam(id) {

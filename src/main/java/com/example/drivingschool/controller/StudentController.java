@@ -68,6 +68,11 @@ public class StudentController {
         return coachService.assignCoach(id, request.getCoachId());
     }
 
+    @PostMapping("/students/{id}/unbind-coach")
+    public Student unbindCoach(@PathVariable Long id) {
+        return coachService.unbindCoach(id);
+    }
+
     @PostMapping("/students/{id}/progress")
     public Student updateProgress(@PathVariable Long id, @RequestBody ProgressRequest request) {
         return studentService.updateProgress(id, request);

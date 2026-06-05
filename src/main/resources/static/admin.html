@@ -71,8 +71,15 @@
 
     <section id="assign" class="view">
         <section class="panel">
-            <div class="panel-title"><h2>待分配学员</h2><span class="muted">系统按车型、空闲名额和评分推荐教练</span></div>
+            <div class="panel-title">
+                <h2>教练分配管理</h2>
+                <div class="filter-tabs" id="assignFilterTabs">
+                    <button class="tab active" data-filter="pending">待分配</button>
+                    <button class="tab" data-filter="assigned">已分配</button>
+                </div>
+            </div>
             <div id="coachAssignList" class="item-list"></div>
+            <div id="assignedList" class="item-list" style="display:none"></div>
         </section>
         <section class="panel">
             <div class="panel-title"><h2>教练资源</h2></div>
@@ -144,6 +151,14 @@
         <label class="wide" style="margin-top:12px">个人简介<textarea id="coachBio" rows="3" placeholder="教练简介..."></textarea></label>
     </div>
     <div class="dialog-actions"><button class="ghost" id="cancelCoachForm">取消</button><button class="primary" id="submitCoachForm">保存</button></div>
+</dialog>
+<dialog id="reassignDialog">
+    <div class="dialog-head"><h2 id="reassignTitle">换教练</h2><button class="icon-btn" id="closeReassign" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <p id="reassignInfo" class="muted"></p>
+        <div id="reassignRecommendations" class="item-list" style="max-height:300px;overflow-y:auto"></div>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelReassign">取消</button></div>
 </dialog>
 <div id="toast"></div>
 <script src="/common.js"></script>

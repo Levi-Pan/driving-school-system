@@ -845,6 +845,25 @@ dialog::backdrop {
     color: #842029;
     background: #f8d7da;
 }
+.change-log-details {
+    margin-top: 6px;
+    font-size: 0.85em;
+    color: #666;
+}
+.change-log-details summary {
+    cursor: pointer;
+    color: var(--primary, #4361ee);
+    font-weight: 500;
+}
+.change-log-details ul {
+    margin: 4px 0 0 16px;
+    padding: 0;
+    list-style: disc;
+}
+.change-log-details li {
+    margin: 2px 0;
+    line-height: 1.5;
+}
 
 @media print {
     body > *:not(dialog) {
