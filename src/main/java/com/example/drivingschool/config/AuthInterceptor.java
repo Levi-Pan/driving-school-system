@@ -7,7 +7,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
 import java.util.Map;
-
+//测试
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
     private static final Map<String, String> PAGE_ROLES = Map.of(
