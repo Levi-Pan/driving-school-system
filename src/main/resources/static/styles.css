@@ -570,6 +570,12 @@ th {
     justify-content: flex-start;
 }
 
+.actions-wrap {
+    display: grid;
+    grid-template-columns: auto;
+    justify-items: end;
+}
+
 .recommend-row {
     display: flex;
     flex-wrap: wrap;
@@ -709,6 +715,154 @@ dialog::backdrop {
     .actions {
         justify-content: flex-start;
     }
+}
+
+.review-reason {
+    color: var(--coral);
+    font-size: 13px;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.filter-tabs .tab {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.filter-tabs .tab.active {
+    background: var(--teal);
+    color: #fff;
+    border-color: var(--teal);
+}
+
+.search-input {
+    width: 260px;
+}
+
+.material-preview {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.material-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.dialog-body {
+    padding: 18px;
+}
+
+.dialog-body textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    resize: vertical;
+    font: inherit;
+}
+
+.coach-manage-card {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fbfcfd;
+}
+
+.coach-manage-card .coach-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.coach-manage-card .coach-info {
+    display: grid;
+    gap: 4px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.coach-manage-card .coach-info strong {
+    color: var(--ink);
+    font-size: 16px;
+}
+
+.coach-manage-card .coach-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.coach-manage-card .coach-actions button {
+    min-height: 32px;
+    font-size: 12px;
+}
+
+.coach-status {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.coach-status.active {
+    color: #0f5132;
+    background: #dff4e8;
+}
+
+.coach-status.paused {
+    color: #7a4b00;
+    background: #fff0cf;
+}
+
+.coach-status.left {
+    color: #842029;
+    background: #f8d7da;
+}
+.change-log-details {
+    margin-top: 6px;
+    font-size: 0.85em;
+    color: #666;
+}
+.change-log-details summary {
+    cursor: pointer;
+    color: var(--primary, #4361ee);
+    font-weight: 500;
+}
+.change-log-details ul {
+    margin: 4px 0 0 16px;
+    padding: 0;
+    list-style: disc;
+}
+.change-log-details li {
+    margin: 2px 0;
+    line-height: 1.5;
 }
 
 @media print {

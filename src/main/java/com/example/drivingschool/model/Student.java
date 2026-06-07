@@ -44,6 +44,12 @@ public class Student {
     @CollectionTable(name = "student_progress_logs", joinColumns = @JoinColumn(name = "student_id"))
     @Column(name = "progress_log", length = 500)
     private List<String> progressLogs = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "coach_change_logs", joinColumns = @JoinColumn(name = "student_id"))
+    @Column(name = "change_log", length = 500)
+    private List<String> coachChangeLogs = new ArrayList<>();
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Long getId() {
@@ -220,5 +226,13 @@ public class Student {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<String> getCoachChangeLogs() {
+        return coachChangeLogs;
+    }
+
+    public void setCoachChangeLogs(List<String> coachChangeLogs) {
+        this.coachChangeLogs = coachChangeLogs;
     }
 }

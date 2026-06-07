@@ -26,6 +26,12 @@ public class Coach {
     private String vehicleType;
     private double rating;
     private int maxStudents;
+    private String gender = "";
+    private int yearsOfExperience;
+    @Column(length = 500)
+    private String bio = "";
+    private String avatar = "";
+    private String status = "在岗";
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "coach_free_times", joinColumns = @JoinColumn(name = "coach_id"))
     @Column(name = "free_time")
@@ -59,67 +65,42 @@ public class Coach {
         return Math.max(0, maxStudents - studentIds.size());
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getVehicleType() { return vehicleType; }
+    public void setVehicleType(String vehicleType) { this.vehicleType = vehicleType; }
 
-    public String getPhone() {
-        return phone;
-    }
+    public double getRating() { return rating; }
+    public void setRating(double rating) { this.rating = rating; }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
+    public int getMaxStudents() { return maxStudents; }
+    public void setMaxStudents(int maxStudents) { this.maxStudents = maxStudents; }
 
-    public String getVehicleType() {
-        return vehicleType;
-    }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
-    public void setVehicleType(String vehicleType) {
-        this.vehicleType = vehicleType;
-    }
+    public int getYearsOfExperience() { return yearsOfExperience; }
+    public void setYearsOfExperience(int yearsOfExperience) { this.yearsOfExperience = yearsOfExperience; }
 
-    public double getRating() {
-        return rating;
-    }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
-    public void setRating(double rating) {
-        this.rating = rating;
-    }
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
 
-    public int getMaxStudents() {
-        return maxStudents;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setMaxStudents(int maxStudents) {
-        this.maxStudents = maxStudents;
-    }
+    public List<String> getFreeTimes() { return freeTimes; }
+    public void setFreeTimes(List<String> freeTimes) { this.freeTimes = freeTimes; }
 
-    public List<String> getFreeTimes() {
-        return freeTimes;
-    }
-
-    public void setFreeTimes(List<String> freeTimes) {
-        this.freeTimes = freeTimes;
-    }
-
-    public List<Long> getStudentIds() {
-        return studentIds;
-    }
-
-    public void setStudentIds(List<Long> studentIds) {
-        this.studentIds = studentIds;
-    }
+    public List<Long> getStudentIds() { return studentIds; }
+    public void setStudentIds(List<Long> studentIds) { this.studentIds = studentIds; }
 }
