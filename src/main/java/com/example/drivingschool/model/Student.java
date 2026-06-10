@@ -40,10 +40,10 @@ public class Student {
     private String stage = "科目一学习";
     @Column(name = "hours")
     private Double storedHours = 0.0;
-    private Double subjectOneHours;
-    private Double subjectTwoHours;
-    private Double subjectThreeHours;
-    private Double subjectFourHours;
+    private Double subjectOneHours = 0.0;
+    private Double subjectTwoHours = 0.0;
+    private Double subjectThreeHours = 0.0;
+    private Double subjectFourHours = 0.0;
     private boolean registrationFormGenerated;
     private boolean medicalFormGenerated;
     private boolean admissionTicketGenerated;
