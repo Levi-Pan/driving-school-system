@@ -15,6 +15,7 @@
     <nav class="tabs">
         <button class="tab active" data-view="dashboard">业务总览</button>
         <button class="tab" data-view="review">报名审核</button>
+        <button class="tab" data-view="studentManage">学员管理</button>
         <button class="tab" data-view="coachManage">教练管理</button>
         <button class="tab" data-view="assign">教练分配</button>
         <button class="tab" data-view="exam">考试成绩</button>
@@ -37,7 +38,7 @@
             <div class="panel-title"><h2>学员业务队列</h2><span class="muted">全校学员状态</span></div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>学员</th><th>车型</th><th>状态</th><th>阶段</th><th>学时</th><th>自动初审</th></tr></thead>
+                    <thead><tr><th>学员</th><th>车型</th><th>状态</th><th>阶段</th><th>学时(①/②/③/④)</th><th>自动初审</th></tr></thead>
                     <tbody id="studentTable"></tbody>
                 </table>
             </div>
@@ -54,11 +55,44 @@
                 <button class="tab" data-filter="审核驳回">审核驳回</button>
                 <button class="tab" data-filter="审核通过">已通过</button>
             </div>
-            <input type="text" id="reviewSearch" placeholder="搜索姓名/手机号/身份证号" class="search-input">
+            <div class="search-group">
+                <input type="text" id="reviewSearch" placeholder="搜索姓名/手机号/身份证号" class="search-input">
+                <button class="ghost" id="reviewSearchBtn">搜索</button>
+            </div>
         </div>
         <section class="panel">
             <div class="panel-title"><h2>报名复审与材料</h2><span class="muted">通过后自动生成报名表、体检表、准考证</span></div>
             <div id="reviewList" class="item-list"></div>
+        </section>
+    </section>
+
+    <section id="studentManage" class="view">
+        <div class="filter-bar">
+            <div class="search-group">
+                <input type="text" id="studentSearchInput" placeholder="搜索姓名 / 手机号 / 身份证号" class="search-input">
+                <button class="ghost" id="studentSearchBtn">搜索</button>
+            </div>
+            <select id="studentStatusFilter">
+                <option value="">全部状态</option>
+                <option value="待分配">待分配</option>
+                <option value="学习中">学习中</option>
+                <option value="可报名考试">可报名考试</option>
+                <option value="考试报名待审">考试报名待审</option>
+                <option value="待考试">待考试</option>
+                <option value="补考安排中">补考安排中</option>
+                <option value="等待发证">等待发证</option>
+                <option value="已发证">已发证</option>
+            </select>
+            <select id="studentVehicleFilter">
+                <option value="">全部车型</option>
+                <option value="C1">C1</option>
+                <option value="C2">C2</option>
+                <option value="B2">B2</option>
+            </select>
+        </div>
+        <section class="panel">
+            <div class="panel-title"><h2>学员档案</h2><span class="muted" id="studentManageCount"></span></div>
+            <div id="studentManageList" class="item-list"></div>
         </section>
     </section>
 
@@ -88,8 +122,24 @@
     </section>
 
     <section id="exam" class="view">
+        <div class="filter-bar">
+            <div class="filter-tabs" id="examFilterTabs">
+                <button class="tab active" data-subject="">全部</button>
+                <button class="tab" data-subject="科目一">科目一</button>
+                <button class="tab" data-subject="科目二">科目二</button>
+                <button class="tab" data-subject="科目三">科目三</button>
+                <button class="tab" data-subject="科目四">科目四</button>
+            </div>
+            <div class="filter-tabs" id="examStatusTabs">
+                <button class="tab active" data-status="">全部状态</button>
+                <button class="tab" data-status="待审核">待审核</button>
+                <button class="tab" data-status="报名成功">报名成功</button>
+                <button class="tab" data-status="已出成绩">已出成绩</button>
+                <button class="tab" data-status="报名驳回">已驳回</button>
+            </div>
+        </div>
         <section class="panel">
-            <div class="panel-title"><h2>考试审核与成绩录入</h2></div>
+            <div class="panel-title"><h2>考试审核与成绩管理</h2><span class="muted" id="examCount"></span></div>
             <div id="examList" class="item-list"></div>
         </section>
     </section>
@@ -159,6 +209,38 @@
         <div id="reassignRecommendations" class="item-list" style="max-height:300px;overflow-y:auto"></div>
     </div>
     <div class="dialog-actions"><button class="ghost" id="cancelReassign">取消</button></div>
+</dialog>
+<dialog id="studentDetailDialog">
+    <div class="dialog-head"><h2 id="studentDetailTitle">学员详情</h2><button class="icon-btn" id="closeStudentDetail" title="关闭">×</button></div>
+    <div id="studentDetailBody" class="dialog-body" style="max-height:70vh;overflow-y:auto"></div>
+    <div class="dialog-actions"><button class="primary" id="closeStudentDetailBtn">关闭</button></div>
+</dialog>
+<dialog id="examRejectDialog">
+    <div class="dialog-head"><h2>驳回考试报名</h2><button class="icon-btn" id="closeExamReject" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <p id="examRejectInfo" class="muted"></p>
+        <label>驳回原因（必填）<textarea id="examRejectReason" rows="3" placeholder="请输入驳回原因…"></textarea></label>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelExamReject">取消</button><button class="danger" id="confirmExamReject">确认驳回</button></div>
+</dialog>
+<dialog id="scoreDialog">
+    <div class="dialog-head"><h2 id="scoreDialogTitle">录入成绩</h2><button class="icon-btn" id="closeScore" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <p id="scoreInfo" class="muted"></p>
+        <div class="form-grid compact">
+            <label>考试成绩（0-100）<input type="number" id="scoreInput" min="0" max="100" placeholder="请输入分数"></label>
+            <label>备注（选填）<input type="text" id="scoreRemark" placeholder="如：正常发挥"></label>
+        </div>
+        <p id="scorePassLine" class="muted" style="margin-top:8px"></p>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelScore">取消</button><button class="primary" id="confirmScore">确认录入</button></div>
+</dialog>
+<dialog id="certificateDialog">
+    <div class="dialog-head"><h2>发证登记</h2><button class="icon-btn" id="closeCertificate" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <p id="certificateInfo"></p>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelCertificate">取消</button><button class="primary" id="confirmCertificate">确认发证</button></div>
 </dialog>
 <div id="toast"></div>
 <script src="/common.js"></script>

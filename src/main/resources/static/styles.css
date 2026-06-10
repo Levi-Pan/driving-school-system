@@ -864,6 +864,103 @@ dialog::backdrop {
     margin: 2px 0;
     line-height: 1.5;
 }
+/* 学员详情弹窗 */
+.detail-section {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #eee;
+}
+.detail-section:last-child {
+    border-bottom: none;
+}
+.detail-section h4 {
+    margin: 0 0 8px;
+    font-size: 1em;
+    color: var(--primary, #4361ee);
+}
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px 20px;
+    font-size: 0.9em;
+}
+.detail-grid .muted {
+    display: block;
+    font-size: 0.8em;
+}
+.detail-grid strong {
+    font-size: 1.05em;
+}
+/* 进度条 */
+.progress-bars {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.progress-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88em;
+}
+.progress-label {
+    min-width: 140px;
+    white-space: nowrap;
+}
+.progress-track {
+    flex: 1;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--primary, #4361ee);
+    border-radius: 5px;
+    transition: width 0.3s;
+}
+.progress-fill.done {
+    background: #0f766e;
+}
+.progress-done {
+    color: #0f766e;
+    font-weight: 600;
+    font-size: 0.85em;
+}
+/* 材料缩略图 */
+.material-preview {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.material-thumb {
+    text-align: center;
+}
+.material-thumb img {
+    max-width: 180px;
+    max-height: 140px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    margin-top: 4px;
+}
+/* 搜索框+按钮组合 */
+.search-group {
+    display: flex;
+    gap: 0;
+    flex: 1;
+    max-width: 360px;
+}
+.search-group .search-input {
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+}
+.search-group button {
+    border-radius: 0 6px 6px 0;
+    white-space: nowrap;
+}
 
 @media print {
     body > *:not(dialog) {

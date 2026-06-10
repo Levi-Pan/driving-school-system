@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 public class ExamApplyRequest {
     private Long studentId;
     private String subject;
-    private LocalDateTime examTime;
+    private java.time.LocalDateTime examTime;
+    private String venue;
 
     public Long getStudentId() {
         return studentId;
@@ -23,11 +24,19 @@ public class ExamApplyRequest {
         this.subject = subject;
     }
 
-    public LocalDateTime getExamTime() {
+    public java.time.LocalDateTime getExamTime() {
         return examTime;
     }
 
-    public void setExamTime(LocalDateTime examTime) {
+    public void setExamTime(java.time.LocalDateTime examTime) {
         this.examTime = examTime;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
     }
 }

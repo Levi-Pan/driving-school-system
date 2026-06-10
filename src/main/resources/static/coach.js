@@ -47,7 +47,7 @@ function renderCoachStudents() {
         <article class="item single">
             <div>
                 <h3>${student.name} ${statusTag(student.status)}</h3>
-                <p>电话：${student.phone} · 车型：${student.vehicleType} · 阶段：${student.stage} · 学时：${student.hours}</p>
+                <p>电话：${student.phone} · 车型：${student.vehicleType} · 阶段：${student.stage} · 学时：①${student.subjectOneHours || 0} / ②${student.subjectTwoHours || 0} / ③${student.subjectThreeHours || 0} / ④${student.subjectFourHours || 0}</p>
                 <p>练车记录：${(student.progressLogs || []).slice(-3).join(" / ") || "暂无记录"}</p>
             </div>
         </article>

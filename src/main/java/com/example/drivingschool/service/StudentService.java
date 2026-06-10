@@ -114,13 +114,18 @@ public class StudentService {
 
     public Student updateProgress(Long studentId, ProgressRequest request) {
         Student student = requireStudent(studentId);
-        student.setHours(student.getHours() + request.getHours());
+        double hours = request.getHours();
+        String subject = request.getSubject();
+        // 按科目累加对应学时
+        if (subject != null && !subject.isBlank()) {
+            addSubjectHours(student, subject, hours);
+        }
         if (request.getStage() != null && !request.getStage().isBlank()) {
             student.setStage(request.getStage());
         } else {
-            student.setStage(inferStage(student.getHours(), student.getStage()));
+            student.setStage(inferStage(student));
         }
-        student.getProgressLogs().add(LocalDate.now() + " 学时+" + request.getHours() + "：" + defaultText(request.getRecord(), "教练录入练车记录"));
+        student.getProgressLogs().add(LocalDate.now() + " " + (subject != null ? subject : "练车") + " 学时+" + hours + "：" + defaultText(request.getRecord(), "教练录入练车记录"));
         if (isStageComplete(student)) {
             student.setStatus("可报名考试");
         }
@@ -203,31 +208,65 @@ public class StudentService {
         student.setAdmissionTicketGenerated(true);
     }
 
+    /** 按科目累加学时 */
+    private void addSubjectHours(Student student, String subject, double hours) {
+        switch (subject) {
+            case "科目一" -> student.setSubjectOneHours(student.getSubjectOneHours() + hours);
+            case "科目二" -> student.setSubjectTwoHours(student.getSubjectTwoHours() + hours);
+            case "科目三" -> student.setSubjectThreeHours(student.getSubjectThreeHours() + hours);
+            case "科目四" -> student.setSubjectFourHours(student.getSubjectFourHours() + hours);
+        }
+    }
+
+    /** 各科目要求的学时 */
+    private double requiredHours(String subject) {
+        return switch (subject) {
+            case "科目一" -> 12;
+            case "科目二" -> 12;
+            case "科目三" -> 34;
+            case "科目四" -> 10;
+            default -> 0;
+        };
+    }
+
+    /** 获取学员指定科目的已修学时 */
+    private double getSubjectHours(Student student, String subject) {
+        return switch (subject) {
+            case "科目一" -> student.getSubjectOneHours();
+            case "科目二" -> student.getSubjectTwoHours();
+            case "科目三" -> student.getSubjectThreeHours();
+            case "科目四" -> student.getSubjectFourHours();
+            default -> 0;
+        };
+    }
+
     private boolean isStageComplete(Student student) {
         return switch (student.getStage()) {
-            case "科目一学习" -> student.getHours() >= 12;
-            case "科目二训练" -> student.getHours() >= 28;
-            case "科目三训练" -> student.getHours() >= 52;
-            case "科目四学习" -> student.getHours() >= 60;
+            case "科目一学习" -> student.getSubjectOneHours() >= requiredHours("科目一");
+            case "科目二训练" -> student.getSubjectTwoHours() >= requiredHours("科目二");
+            case "科目三训练" -> student.getSubjectThreeHours() >= requiredHours("科目三");
+            case "科目四学习" -> student.getSubjectFourHours() >= requiredHours("科目四");
             default -> false;
         };
     }
 
     boolean canApplyExam(Student student, String subject) {
+        double hours = getSubjectHours(student, subject);
+        boolean hoursEnough = hours >= requiredHours(subject);
         return switch (subject) {
-            case "科目一" -> student.getHours() >= 12;
-            case "科目二" -> student.getHours() >= 28 && List.of("科目二训练", "科目三训练", "科目四学习", "全部通过").contains(student.getStage());
-            case "科目三" -> student.getHours() >= 52 && List.of("科目三训练", "科目四学习", "全部通过").contains(student.getStage());
-            case "科目四" -> student.getHours() >= 60 && List.of("科目四学习", "全部通过").contains(student.getStage());
+            case "科目一" -> hoursEnough;
+            case "科目二" -> hoursEnough && List.of("科目二训练", "科目三训练", "科目四学习", "全部通过").contains(student.getStage());
+            case "科目三" -> hoursEnough && List.of("科目三训练", "科目四学习", "全部通过").contains(student.getStage());
+            case "科目四" -> hoursEnough && List.of("科目四学习", "全部通过").contains(student.getStage());
             default -> false;
         };
     }
 
-    private String inferStage(double hours, String currentStage) {
-        if (hours >= 60) return "科目四学习";
-        if (hours >= 52) return "科目三训练";
-        if (hours >= 28) return "科目二训练";
-        return defaultText(currentStage, "科目一学习");
+    private String inferStage(Student student) {
+        if (student.getSubjectFourHours() > 0) return "科目四学习";
+        if (student.getSubjectThreeHours() > 0) return "科目三训练";
+        if (student.getSubjectTwoHours() > 0) return "科目二训练";
+        return defaultText(student.getStage(), "科目一学习");
     }
 
     Student requireStudent(Long id) {

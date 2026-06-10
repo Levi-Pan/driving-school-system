@@ -70,7 +70,7 @@ function renderStudentStatus() {
         <article class="item single">
             <div>
                 <h3>${student.name} ${statusTag(student.status)}</h3>
-                <p>报考车型：${student.vehicleType} · 学习阶段：${student.stage} · 已完成学时：${student.hours}</p>
+                <p>报考车型：${student.vehicleType} · 学习阶段：${student.stage} · 学时：①${student.subjectOneHours || 0} / ②${student.subjectTwoHours || 0} / ③${student.subjectThreeHours || 0} / ④${student.subjectFourHours || 0}</p>
                 <p>自动初审：${student.autoReviewResult}</p>
                 ${rejectReason}
                 <p>教练：${coach ? `${coach.name}（${coach.phone}，评分 ${coach.rating}）` : "暂未分配"}</p>

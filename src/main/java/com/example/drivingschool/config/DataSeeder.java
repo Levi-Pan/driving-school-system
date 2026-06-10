@@ -56,6 +56,7 @@ public class DataSeeder {
         coachService.assignCoach(student.getId(), coachA.getId());
         ProgressRequest progress = new ProgressRequest();
         progress.setHours(32);
+        progress.setSubject("科目二");
         progress.setStage("科目二训练");
         progress.setRecord("完成基础场地训练");
         studentService.updateProgress(student.getId(), progress);

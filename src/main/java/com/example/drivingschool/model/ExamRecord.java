@@ -21,6 +21,9 @@ public class ExamRecord {
     private Integer score;
     private Boolean passed;
     private String remark = "";
+    private String venue = "";
+    private boolean makeup;
+    private java.math.BigDecimal makeupFee;
 
     public Long getId() {
         return id;
@@ -84,5 +87,29 @@ public class ExamRecord {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
+    }
+
+    public boolean isMakeup() {
+        return makeup;
+    }
+
+    public void setMakeup(boolean makeup) {
+        this.makeup = makeup;
+    }
+
+    public java.math.BigDecimal getMakeupFee() {
+        return makeupFee;
+    }
+
+    public void setMakeupFee(java.math.BigDecimal makeupFee) {
+        this.makeupFee = makeupFee;
     }
 }

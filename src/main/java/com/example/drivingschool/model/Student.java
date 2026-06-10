@@ -36,7 +36,10 @@ public class Student {
     private String reviewOpinion = "";
     private Long coachId;
     private String stage = "科目一学习";
-    private double hours;
+    private Double subjectOneHours;
+    private Double subjectTwoHours;
+    private Double subjectThreeHours;
+    private Double subjectFourHours;
     private boolean registrationFormGenerated;
     private boolean medicalFormGenerated;
     private boolean admissionTicketGenerated;
@@ -51,6 +54,7 @@ public class Student {
     private List<String> coachChangeLogs = new ArrayList<>();
 
     private LocalDateTime createdAt = LocalDateTime.now();
+    private String certificateStatus = "未发证";
 
     public Long getId() {
         return id;
@@ -180,12 +184,41 @@ public class Student {
         this.stage = stage;
     }
 
-    public double getHours() {
-        return hours;
+    public double getSubjectOneHours() {
+        return subjectOneHours != null ? subjectOneHours : 0;
     }
 
-    public void setHours(double hours) {
-        this.hours = hours;
+    public void setSubjectOneHours(double subjectOneHours) {
+        this.subjectOneHours = subjectOneHours;
+    }
+
+    public double getSubjectTwoHours() {
+        return subjectTwoHours != null ? subjectTwoHours : 0;
+    }
+
+    public void setSubjectTwoHours(double subjectTwoHours) {
+        this.subjectTwoHours = subjectTwoHours;
+    }
+
+    public double getSubjectThreeHours() {
+        return subjectThreeHours != null ? subjectThreeHours : 0;
+    }
+
+    public void setSubjectThreeHours(double subjectThreeHours) {
+        this.subjectThreeHours = subjectThreeHours;
+    }
+
+    public double getSubjectFourHours() {
+        return subjectFourHours != null ? subjectFourHours : 0;
+    }
+
+    public void setSubjectFourHours(double subjectFourHours) {
+        this.subjectFourHours = subjectFourHours;
+    }
+
+    /** 总学时（向后兼容，用于统计展示） */
+    public double getHours() {
+        return subjectOneHours + subjectTwoHours + subjectThreeHours + subjectFourHours;
     }
 
     public boolean isRegistrationFormGenerated() {
@@ -234,5 +267,13 @@ public class Student {
 
     public void setCoachChangeLogs(List<String> coachChangeLogs) {
         this.coachChangeLogs = coachChangeLogs;
+    }
+
+    public String getCertificateStatus() {
+        return certificateStatus;
+    }
+
+    public void setCertificateStatus(String certificateStatus) {
+        this.certificateStatus = certificateStatus;
     }
 }

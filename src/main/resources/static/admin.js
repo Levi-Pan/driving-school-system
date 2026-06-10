@@ -10,6 +10,15 @@ let coachFormEditId = null;
 let assignFilter = "pending";
 let reassignStudentId = null;
 
+let examSubjectFilter = "";
+let examStatusFilter = "";
+let pendingRejectExamId = null;
+let pendingScoreExamId = null;
+
+let studentSearchKeyword = "";
+let studentStatusFilterVal = "";
+let studentVehicleFilterVal = "";
+
 // ========== Admin-Specific Bindings ==========
 
 function setupAdminActions() {
@@ -22,8 +31,14 @@ function setupAdminActions() {
             renderReviewList();
         });
     });
-    $("#reviewSearch")?.addEventListener("input", (event) => {
-        reviewSearchKeyword = event.target.value.trim().toLowerCase();
+    $("#reviewSearch")?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            reviewSearchKeyword = event.target.value.trim().toLowerCase();
+            renderReviewList();
+        }
+    });
+    $("#reviewSearchBtn")?.addEventListener("click", () => {
+        reviewSearchKeyword = ($("#reviewSearch")?.value || "").trim().toLowerCase();
         renderReviewList();
     });
     // 驳回对话框事件绑定
@@ -53,6 +68,56 @@ function setupAdminActions() {
     // 换教练弹窗事件绑定
     $("#closeReassign")?.addEventListener("click", () => $("#reassignDialog").close());
     $("#cancelReassign")?.addEventListener("click", () => $("#reassignDialog").close());
+    // 考试筛选 tab
+    $$("#examFilterTabs .tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+            $$("#examFilterTabs .tab").forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            examSubjectFilter = tab.dataset.subject || "";
+            renderAdminExamList();
+        });
+    });
+    $$("#examStatusTabs .tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+            $$("#examStatusTabs .tab").forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            examStatusFilter = tab.dataset.status || "";
+            renderAdminExamList();
+        });
+    });
+    // 考试驳回弹窗
+    $("#closeExamReject")?.addEventListener("click", () => { $("#examRejectDialog").close(); pendingRejectExamId = null; });
+    $("#cancelExamReject")?.addEventListener("click", () => { $("#examRejectDialog").close(); pendingRejectExamId = null; });
+    $("#confirmExamReject")?.addEventListener("click", confirmExamReject);
+    // 成绩录入弹窗
+    $("#closeScore")?.addEventListener("click", () => { $("#scoreDialog").close(); pendingScoreExamId = null; });
+    $("#cancelScore")?.addEventListener("click", () => { $("#scoreDialog").close(); pendingScoreExamId = null; });
+    $("#confirmScore")?.addEventListener("click", confirmScore);
+    // 发证弹窗
+    $("#closeCertificate")?.addEventListener("click", () => $("#certificateDialog").close());
+    $("#cancelCertificate")?.addEventListener("click", () => $("#certificateDialog").close());
+    // 学员管理搜索筛选
+    $("#studentSearchInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            studentSearchKeyword = e.target.value.trim().toLowerCase();
+            renderStudentManage();
+        }
+    });
+    $("#studentSearchBtn")?.addEventListener("click", () => {
+        studentSearchKeyword = ($("#studentSearchInput")?.value || "").trim().toLowerCase();
+        renderStudentManage();
+    });
+    $("#studentStatusFilter")?.addEventListener("change", (e) => {
+        studentStatusFilterVal = e.target.value;
+        renderStudentManage();
+    });
+    $("#studentVehicleFilter")?.addEventListener("change", (e) => {
+        studentVehicleFilterVal = e.target.value;
+        renderStudentManage();
+    });
+    // 学员详情弹窗
+    $("#closeStudentDetail")?.addEventListener("click", () => $("#studentDetailDialog").close());
+    $("#closeStudentDetailBtn")?.addEventListener("click", () => $("#studentDetailDialog").close());
 }
 
 function bindAdminForms() {
@@ -65,6 +130,7 @@ function renderAdmin() {
     renderMetrics();
     renderStudentTable();
     renderReviewList();
+    renderStudentManage();
     renderCoachManage();
     renderCoachAssignment();
     renderAssignedList();
@@ -100,7 +166,12 @@ function renderStudentTable() {
             <td>${student.vehicleType}</td>
             <td>${statusTag(student.status)}</td>
             <td>${student.stage}</td>
-            <td>${student.hours}</td>
+            <td>
+                <span title="科目一">①${student.subjectOneHours || 0}</span> /
+                <span title="科目二">②${student.subjectTwoHours || 0}</span> /
+                <span title="科目三">③${student.subjectThreeHours || 0}</span> /
+                <span title="科目四">④${student.subjectFourHours || 0}</span>
+            </td>
             <td>${student.autoReviewResult}</td>
         </tr>
     `).join("");
@@ -278,7 +349,7 @@ function renderAssignedList() {
         <article class="item">
             <div>
                 <h3>${student.name} · ${student.vehicleType} ${statusTag(student.status)}</h3>
-                <p>当前教练：<strong>${coachName}</strong> · 阶段：${student.stage} · 学时：${student.hours}</p>
+                <p>当前教练：<strong>${coachName}</strong> · 阶段：${student.stage} · 学时：①${student.subjectOneHours || 0} / ②${student.subjectTwoHours || 0} / ③${student.subjectThreeHours || 0} / ④${student.subjectFourHours || 0}</p>
                 ${logHtml}
             </div>
             <div class="actions">
@@ -347,6 +418,133 @@ async function confirmReassign(newCoachId) {
     }
 }
 
+// ========== Student Manage (学员管理) ==========
+
+const REQUIRED_HOURS = { "科目一": 12, "科目二": 12, "科目三": 34, "科目四": 10 };
+
+function renderStudentManage() {
+    if (!$("#studentManageList")) return;
+    // 只显示审核通过的学员（排除待初审、待复审、初审驳回、审核驳回）
+    const approvedStatuses = ["待分配", "学习中", "可报名考试", "考试报名待审", "待考试", "补考安排中", "等待发证", "已发证"];
+    let filtered = state.students.filter((s) => approvedStatuses.includes(s.status));
+    if (studentSearchKeyword) {
+        filtered = filtered.filter((s) =>
+            (s.name && s.name.toLowerCase().includes(studentSearchKeyword)) ||
+            (s.phone && s.phone.toLowerCase().includes(studentSearchKeyword)) ||
+            (s.idCard && s.idCard.toLowerCase().includes(studentSearchKeyword))
+        );
+    }
+    if (studentStatusFilterVal) {
+        filtered = filtered.filter((s) => s.status === studentStatusFilterVal);
+    }
+    if (studentVehicleFilterVal) {
+        filtered = filtered.filter((s) => s.vehicleType === studentVehicleFilterVal);
+    }
+    const countEl = $("#studentManageCount");
+    if (countEl) countEl.textContent = `共 ${filtered.length} 名学员`;
+    if (!filtered.length) {
+        $("#studentManageList").innerHTML = `<p class="muted">暂无符合条件的学员。</p>`;
+        return;
+    }
+    $("#studentManageList").innerHTML = filtered.map((student) => {
+        const coach = state.coaches.find((c) => c.id === student.coachId);
+        const coachName = coach ? coach.name : "未分配";
+        return `
+        <article class="item" style="cursor:pointer" onclick="showStudentDetail(${student.id})">
+            <div>
+                <h3>${student.name} ${statusTag(student.status)}</h3>
+                <p>身份证：${student.idCard} · 手机：${student.phone} · 车型：${student.vehicleType} · 教练：${coachName}</p>
+                <p>阶段：${student.stage} · 学时：①${student.subjectOneHours || 0}/12 ②${student.subjectTwoHours || 0}/12 ③${student.subjectThreeHours || 0}/34 ④${student.subjectFourHours || 0}/10</p>
+            </div>
+            <div class="actions"><button class="ghost">查看详情</button></div>
+        </article>`;
+    }).join("");
+}
+
+function showStudentDetail(studentId) {
+    const student = state.students.find((s) => s.id === studentId);
+    if (!student) return;
+    const coach = state.coaches.find((c) => c.id === student.coachId);
+    const exams = state.exams.filter((e) => e.studentId === studentId);
+    const coachName = coach ? coach.name : "未分配";
+    const changeLogs = (student.coachChangeLogs || []).slice().reverse();
+
+    $("#studentDetailTitle").textContent = "学员详情 — " + student.name;
+    $("#studentDetailBody").innerHTML = `
+        <section class="detail-section">
+            <h4>📋 基本信息</h4>
+            <div class="detail-grid">
+                <div><span class="muted">姓名</span><strong>${student.name}</strong></div>
+                <div><span class="muted">身份证</span>${student.idCard}</div>
+                <div><span class="muted">手机号</span>${student.phone}</div>
+                <div><span class="muted">年龄</span>${student.age}岁</div>
+                <div><span class="muted">地址</span>${student.address || "未填写"}</div>
+                <div><span class="muted">报考车型</span>${student.vehicleType}</div>
+                <div><span class="muted">状态</span>${statusTag(student.status)}</div>
+                <div><span class="muted">发证状态</span>${student.certificateStatus || "未发证"}</div>
+            </div>
+        </section>
+        <section class="detail-section">
+            <h4>📝 审核信息</h4>
+            <div class="detail-grid">
+                <div><span class="muted">自动初审</span>${student.autoReviewResult}</div>
+                <div><span class="muted">审核意见</span>${student.reviewOpinion || "无"}</div>
+                <div><span class="muted">报名时间</span>${formatDateTime(student.createdAt)}</div>
+            </div>
+        </section>
+        <section class="detail-section">
+            <h4>👤 教练绑定</h4>
+            <div class="detail-grid">
+                <div><span class="muted">当前教练</span><strong>${coachName}</strong>${coach ? " · " + coach.phone : ""}</div>
+            </div>
+            ${changeLogs.length ? `<details class="change-log-details"><summary>换教练记录（${changeLogs.length}条）</summary><ul>${changeLogs.map(l => `<li>${l}</li>`).join("")}</ul></details>` : ""}
+        </section>
+        <section class="detail-section">
+            <h4>📚 学习进度</h4>
+            <div class="detail-grid">
+                <div><span class="muted">当前阶段</span><strong>${student.stage}</strong></div>
+            </div>
+            <div class="progress-bars">
+                ${buildProgressBar("科目一", student.subjectOneHours || 0, REQUIRED_HOURS["科目一"])}
+                ${buildProgressBar("科目二", student.subjectTwoHours || 0, REQUIRED_HOURS["科目二"])}
+                ${buildProgressBar("科目三", student.subjectThreeHours || 0, REQUIRED_HOURS["科目三"])}
+                ${buildProgressBar("科目四", student.subjectFourHours || 0, REQUIRED_HOURS["科目四"])}
+            </div>
+        </section>
+        <section class="detail-section">
+            <h4>📄 考试记录</h4>
+            ${exams.length ? `<table style="width:100%;font-size:.9em"><thead><tr><th>科目</th><th>状态</th><th>成绩</th><th>考场</th><th>时间</th><th>备注</th></tr></thead><tbody>
+                ${exams.map(e => `<tr><td>${e.subject} ${e.makeup ? '<span class="tag warn">补考</span>' : ''}</td><td>${statusTag(e.status)}</td><td>${e.score != null ? e.score : "-"}</td><td>${e.venue || "-"}</td><td>${formatDateTime(e.examTime)}</td><td>${e.remark || ""}</td></tr>`).join("")}
+            </tbody></table>` : `<p class="muted">暂无考试记录。</p>`}
+        </section>
+        <section class="detail-section">
+            <h4>🖼️ 上传材料</h4>
+            <div class="material-preview">
+                ${student.idPhotoName && student.idPhotoName.startsWith("/uploads/") ? `<div class="material-thumb"><p class="muted">身份证照片</p><img src="${student.idPhotoName}" alt="身份证照片" onclick="window.open('${student.idPhotoName}')"></div>` : '<p class="muted">身份证照片：未上传</p>'}
+                ${student.medicalFormName && student.medicalFormName.startsWith("/uploads/") ? `<div class="material-thumb"><p class="muted">体检表</p><img src="${student.medicalFormName}" alt="体检表" onclick="window.open('${student.medicalFormName}')"></div>` : '<p class="muted">体检表：未上传</p>'}
+            </div>
+        </section>
+        <section class="detail-section">
+            <h4>📜 练车记录</h4>
+            ${(student.progressLogs && student.progressLogs.length)
+                ? `<details class="change-log-details"><summary>共 ${student.progressLogs.length} 条记录</summary><ul>${student.progressLogs.slice().reverse().map(l => `<li>${l}</li>`).join("")}</ul></details>`
+                : `<p class="muted">暂无记录。</p>`}
+        </section>
+    `;
+    $("#studentDetailDialog").showModal();
+}
+
+function buildProgressBar(label, current, required) {
+    const pct = Math.min(100, Math.round(current / required * 100));
+    const done = current >= required;
+    return `
+        <div class="progress-item">
+            <span class="progress-label">${label} <strong>${current}</strong>/${required} 学时</span>
+            <div class="progress-track"><div class="progress-fill ${done ? "done" : ""}" style="width:${pct}%"></div></div>
+            ${done ? '<span class="progress-done">✓ 达标</span>' : ""}
+        </div>`;
+}
+
 function renderCoachCards() {
     if (!$("#coachList")) {
         return;
@@ -365,19 +563,67 @@ function renderAdminExamList() {
     if (!$("#examList")) {
         return;
     }
-    $("#examList").innerHTML = state.exams.length ? state.exams.map((exam) => `
+    let filtered = state.exams;
+    if (examSubjectFilter) {
+        filtered = filtered.filter((e) => e.subject === examSubjectFilter);
+    }
+    if (examStatusFilter) {
+        filtered = filtered.filter((e) => e.status === examStatusFilter);
+    }
+    const countEl = $("#examCount");
+    if (countEl) countEl.textContent = `共 ${filtered.length} 条记录`;
+    if (!filtered.length) {
+        $("#examList").innerHTML = `<p class="muted">暂无符合条件的考试记录。</p>`;
+        return;
+    }
+    $("#examList").innerHTML = filtered.map((exam) => {
+        const student = state.students.find((s) => s.id === exam.studentId);
+        const studentName = student ? student.name : `学员${exam.studentId}`;
+        const isPending = exam.status === "待审核";
+        const isApproved = exam.status === "报名成功";
+        const hasScore = exam.status === "已出成绩";
+        const isRejected = exam.status === "报名驳回";
+
+        let actions = "";
+        if (isPending) {
+            actions += `<button class="primary" onclick="approveExam(${exam.id})">审核通过</button>`;
+            actions += `<button class="danger" onclick="openExamRejectDialog(${exam.id})">驳回</button>`;
+        }
+        if (isApproved) {
+            actions += `<button class="ghost" onclick="openScoreDialog(${exam.id})">录入成绩</button>`;
+        }
+
+        const makeupTag = exam.makeup ? `<span class="tag warn">补考</span>` : "";
+        const passedTag = hasScore ? (exam.passed ? `<span class="tag">合格</span>` : `<span class="tag bad">不合格</span>`) : "";
+
+        return `
         <article class="item">
             <div>
-                <h3>${studentName(exam.studentId)} · ${exam.subject} ${statusTag(exam.status)}</h3>
-                <p>考试时间：${formatDateTime(exam.examTime)} · 成绩：${exam.score ?? "未录入"}</p>
-                <p>${exam.remark || "等待管理员处理"}</p>
+                <h3>${studentName} · ${exam.subject} ${statusTag(exam.status)} ${makeupTag} ${passedTag}</h3>
+                <p>考试时间：${formatDateTime(exam.examTime)} ${exam.venue ? "· 考场：" + exam.venue : ""} · 成绩：${exam.score != null ? exam.score : "未录入"}</p>
+                <p>${exam.remark || ""}${exam.makeupFee ? " · 补考费：" + exam.makeupFee + "元" : ""}</p>
             </div>
-            <div class="actions">
-                <button class="primary" onclick="approveExam(${exam.id})">审核通过</button>
-                <button class="ghost" onclick="scoreExam(${exam.id})">录入成绩</button>
-            </div>
+            ${actions ? `<div class="actions">${actions}</div>` : ""}
+        </article>`;
+    }).join("") + renderCertificateSection();
+}
+
+function renderCertificateSection() {
+    const waiting = state.students.filter((s) => "等待发证".equals?.(s.status) || s.status === "等待发证" || "待发证".equals?.(s.certificateStatus) || s.certificateStatus === "待发证");
+    if (!waiting.length) return "";
+    return `
+    <article class="item" style="border-left:3px solid #0f766e;margin-top:12px">
+        <div>
+            <h3>发证登记</h3>
+            <p class="muted">以下学员已完成全部科目，等待发放驾驶证。</p>
+        </div>
+    </article>
+    ${waiting.map((s) => `
+        <article class="item">
+            <div><h3>${s.name} · ${s.vehicleType} ${statusTag(s.status)}</h3><p>全部科目已通过，待发证。</p></div>
+            <div class="actions"><button class="primary" onclick="openCertificateDialog(${s.id})">登记发证</button></div>
         </article>
-    `).join("") : `<p class="muted">暂无考试记录。</p>`;
+    `).join("")}`;
 }
 
 function renderStatusPills() {
@@ -496,19 +742,97 @@ async function assignCoach(studentId, coachId) {
 }
 
 async function approveExam(id) {
-    await api(`/api/exams/${id}/approve`, { method: "POST" });
-    toast("考试报名审核通过");
-    await loadAll();
+    const exam = state.exams.find((e) => e.id === id);
+    if (!exam) return;
+    const student = state.students.find((s) => s.id === exam.studentId);
+    showResultDialog("确认审核通过", `确定要通过${student?.name || ""}的${exam.subject}考试报名吗？`, async () => {
+        try {
+            await api(`/api/exams/${id}/approve`, { method: "POST" });
+            showResultDialog("审核通过", `${student?.name || ""}的${exam.subject}考试报名已通过。`);
+            await loadAll();
+        } catch (error) {
+            showResultDialog("操作失败", error.message || "审核操作失败。");
+        }
+    });
 }
 
-async function scoreExam(id) {
-    const score = Number(prompt("请输入考试成绩"));
-    if (Number.isNaN(score)) {
+function openExamRejectDialog(examId) {
+    const exam = state.exams.find((e) => e.id === examId);
+    if (!exam) return;
+    pendingRejectExamId = examId;
+    const student = state.students.find((s) => s.id === exam.studentId);
+    $("#examRejectInfo").textContent = `学员：${student?.name || ""} · 科目：${exam.subject}`;
+    $("#examRejectReason").value = "";
+    $("#examRejectDialog").showModal();
+}
+
+async function confirmExamReject() {
+    const reason = $("#examRejectReason").value.trim();
+    if (!reason) { toast("请填写驳回原因"); return; }
+    const id = pendingRejectExamId;
+    if (!id) return;
+    const exam = state.exams.find((e) => e.id === id);
+    const student = state.students.find((s) => s.id === exam?.studentId);
+    try {
+        await api(`/api/exams/${id}/reject`, { method: "POST", body: { reason } });
+        $("#examRejectDialog").close();
+        pendingRejectExamId = null;
+        showResultDialog("已驳回", `${student?.name || ""}的${exam?.subject || ""}考试报名已驳回。`);
+        await loadAll();
+    } catch (error) {
+        showResultDialog("操作失败", error.message || "驳回操作失败。");
+    }
+}
+
+function openScoreDialog(examId) {
+    const exam = state.exams.find((e) => e.id === examId);
+    if (!exam) return;
+    pendingScoreExamId = examId;
+    const student = state.students.find((s) => s.id === exam.studentId);
+    const line = (exam.subject === "科目二" || exam.subject === "科目三") ? 80 : 90;
+    $("#scoreDialogTitle").textContent = "录入成绩 — " + (student?.name || "");
+    $("#scoreInfo").textContent = `科目：${exam.subject} · 考场：${exam.venue || "未设置"}`;
+    $("#scorePassLine").textContent = `合格线：${line}分`;
+    $("#scoreInput").value = "";
+    $("#scoreRemark").value = "";
+    $("#scoreDialog").showModal();
+}
+
+async function confirmScore() {
+    const score = Number($("#scoreInput").value);
+    if (Number.isNaN(score) || score < 0 || score > 100) {
+        toast("请输入 0-100 的有效分数");
         return;
     }
-    await api(`/api/exams/${id}/score`, { method: "POST", body: { score, remark: "管理员录入成绩" } });
-    toast("成绩已录入，系统已更新学习阶段");
-    await loadAll();
+    const id = pendingScoreExamId;
+    if (!id) return;
+    const remark = $("#scoreRemark").value.trim();
+    try {
+        await api(`/api/exams/${id}/score`, { method: "POST", body: { score, remark } });
+        $("#scoreDialog").close();
+        pendingScoreExamId = null;
+        toast("成绩已录入，学习阶段已更新");
+        await loadAll();
+    } catch (error) {
+        showResultDialog("录入失败", error.message || "成绩录入失败。");
+    }
+}
+
+function openCertificateDialog(studentId) {
+    const student = state.students.find((s) => s.id === studentId);
+    if (!student) return;
+    $("#certificateInfo").textContent = `确认学员「${student.name}」已领取驾驶证？登记后不可撤销。`;
+    $("#confirmCertificate").onclick = async () => {
+        try {
+            await api(`/api/students/${studentId}/certificate`, { method: "POST" });
+            $("#certificateDialog").close();
+            showResultDialog("发证成功", `学员「${student.name}」的发证登记已完成。`);
+            await loadAll();
+        } catch (error) {
+            showResultDialog("操作失败", error.message || "发证登记失败。");
+        }
+    };
+    $("#certificateDialog").showModal();
 }
 
 // ========== Coach Manage ==========
