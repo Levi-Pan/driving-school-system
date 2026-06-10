@@ -110,6 +110,13 @@
     <div id="docPreview" class="doc-preview"></div>
     <div class="dialog-actions"><button class="ghost" id="exportDoc">导出 HTML</button><button class="primary" id="printDoc">打印 / 另存为 PDF</button></div>
 </dialog>
+<dialog id="resultDialog">
+    <div class="dialog-head"><h2 id="resultTitle">提示</h2><button class="icon-btn" id="closeResult" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <p id="resultMessage"></p>
+    </div>
+    <div class="dialog-actions"><button class="primary" id="confirmResult">确定</button></div>
+</dialog>
 <div id="toast"></div>
 <script>
     (function () {

@@ -3,22 +3,41 @@
 function bindCoachForms() {
     $("#progressForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const submitButton = event.target.querySelector("button[type=submit]");
+        const originalText = submitButton?.textContent || "保存进度";
         const data = formData(event.target);
         const studentId = data.studentId;
         delete data.studentId;
         data.hours = Number(data.hours);
-        await api(`/api/students/${studentId}/progress`, { method: "POST", body: data });
-        toast("学时与练车记录已保存");
-        await loadAll();
+        try {
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "正在保存...";
+            }
+            await api(`/api/students/${studentId}/progress`, { method: "POST", body: data });
+            await loadAll();
+            showResultDialog("保存成功", "学时与练车记录已保存。");
+        } catch (error) {
+            showResultDialog("保存失败", error.message || "请稍后重试。");
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            }
+        }
     });
 
     $("#availabilityForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = formData(event.target);
         const freeTimes = data.freeTimes.split(/[、,，]/).map((item) => item.trim()).filter(Boolean);
-        await api(`/api/coaches/${data.coachId}/availability`, { method: "POST", body: { freeTimes } });
-        toast("教练空闲时间已更新");
-        await loadAll();
+        try {
+            await api(`/api/coaches/${data.coachId}/availability`, { method: "POST", body: { freeTimes } });
+            await loadAll();
+            showResultDialog("保存成功", "教练空闲时间已更新。");
+        } catch (error) {
+            showResultDialog("保存失败", error.message || "请稍后重试。");
+        }
     });
 
     $("#coachPick")?.addEventListener("change", renderCoachViews);

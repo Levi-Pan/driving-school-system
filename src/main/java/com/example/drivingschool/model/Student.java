@@ -29,13 +29,17 @@ public class Student {
     private int age;
     private boolean licenseEligible;
     private String medicalStatus;
+    @Column(length = 1000)
     private String idPhotoName;
+    @Column(length = 1000)
     private String medicalFormName;
     private String status = "待审核";
     private String autoReviewResult = "待初审";
     private String reviewOpinion = "";
     private Long coachId;
     private String stage = "科目一学习";
+    @Column(name = "hours")
+    private Double storedHours = 0.0;
     private Double subjectOneHours;
     private Double subjectTwoHours;
     private Double subjectThreeHours;
@@ -190,6 +194,7 @@ public class Student {
 
     public void setSubjectOneHours(double subjectOneHours) {
         this.subjectOneHours = subjectOneHours;
+        syncStoredHours();
     }
 
     public double getSubjectTwoHours() {
@@ -198,6 +203,7 @@ public class Student {
 
     public void setSubjectTwoHours(double subjectTwoHours) {
         this.subjectTwoHours = subjectTwoHours;
+        syncStoredHours();
     }
 
     public double getSubjectThreeHours() {
@@ -206,6 +212,7 @@ public class Student {
 
     public void setSubjectThreeHours(double subjectThreeHours) {
         this.subjectThreeHours = subjectThreeHours;
+        syncStoredHours();
     }
 
     public double getSubjectFourHours() {
@@ -214,11 +221,20 @@ public class Student {
 
     public void setSubjectFourHours(double subjectFourHours) {
         this.subjectFourHours = subjectFourHours;
+        syncStoredHours();
     }
 
     /** 总学时（向后兼容，用于统计展示） */
     public double getHours() {
-        return subjectOneHours + subjectTwoHours + subjectThreeHours + subjectFourHours;
+        return getSubjectOneHours() + getSubjectTwoHours() + getSubjectThreeHours() + getSubjectFourHours();
+    }
+
+    public void setHours(double hours) {
+        this.storedHours = hours;
+    }
+
+    private void syncStoredHours() {
+        this.storedHours = getHours();
     }
 
     public boolean isRegistrationFormGenerated() {

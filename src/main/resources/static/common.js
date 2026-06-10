@@ -124,7 +124,7 @@ async function loadAll() {
         renderRole();
         syncApplicationMaterials();
     } catch (error) {
-        toast("数据加载失败，请确认 MySQL 账号密码正确并已启动后端服务");
+        toast(error.message || "数据加载失败，请稍后重试");
     }
 }
 
@@ -237,6 +237,10 @@ async function uploadMaterial(file) {
         body: data
     });
     if (!response.ok) {
+        if (response.status === 401) {
+            localStorage.removeItem("currentAccount");
+            throw new Error("登录已过期，请重新登录后再提交。");
+        }
         const error = await response.json().catch(() => ({ message: "图片上传失败" }));
         throw new Error(error.message || "图片上传失败");
     }
@@ -364,6 +368,10 @@ async function api(url, options = {}) {
         headers: options.body ? { "Content-Type": "application/json" } : {},
         body: options.body ? JSON.stringify(options.body) : undefined
     });
+    if (!response.ok && response.status === 401) {
+        localStorage.removeItem("currentAccount");
+        throw new Error("HTTP 401：登录已过期或未登录，请重新登录后再提交。");
+    }
     if (!response.ok) {
         const error = await response.json().catch(() => ({ message: "请求失败" }));
         throw new Error(error.message || "请求失败");
