@@ -19,4 +19,13 @@ public class ApiExceptionHandler {
     public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", exception.getMessage()));
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleServerError(Exception exception) {
+        String message = exception.getMessage();
+        if (message == null || message.isBlank()) {
+            message = exception.getClass().getSimpleName();
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", message));
+    }
 }

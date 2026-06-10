@@ -3,45 +3,70 @@
 function bindStudentForms() {
     $("#applyForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const submitButton = event.target.querySelector("button[type=submit]");
+        const originalText = submitButton?.textContent || "提交报名";
         const data = formData(event.target);
         data.name = state.currentAccount?.name || data.name;
         if (!data.idPhotoName || !data.medicalFormName) {
-            toast("请先上传身份证照片和体检表图片");
+            showResultDialog("材料未上传", "请先上传身份证照片和体检表图片，再提交报名。");
             return;
         }
         data.age = Number(data.age);
         data.licenseEligible = event.target.licenseEligible.checked;
-        await api("/api/students/apply", { method: "POST", body: data });
-        toast("报名已提交，系统已完成自动初审");
-        await loadAll();
+        try {
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "正在提交...";
+            }
+            await api("/api/students/apply", { method: "POST", body: data });
+            await loadAll();
+            showResultDialog("报名提交成功", "系统已完成自动初审，请在“我的进度”中查看审核状态。", () => {
+                document.querySelector('[data-view="status"]')?.click();
+            });
+        } catch (error) {
+            showResultDialog("报名提交失败", error.message || "请检查后端服务和数据库连接后重试。");
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            }
+        }
     });
 
     $("#lessonForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const student = currentAccountStudent();
         if (!student) {
-            toast("请先完成在线报名");
+            showResultDialog("无法约课", "请先完成在线报名。");
             return;
         }
         const data = formData(event.target);
         data.studentId = student.id;
-        await api("/api/lessons", { method: "POST", body: data });
-        toast("约课成功");
-        await loadAll();
+        try {
+            await api("/api/lessons", { method: "POST", body: data });
+            await loadAll();
+            showResultDialog("约课成功", "你的约课申请已提交。");
+        } catch (error) {
+            showResultDialog("约课失败", error.message || "请稍后重试。");
+        }
     });
 
     $("#examForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const student = currentAccountStudent();
         if (!student) {
-            toast("请先完成在线报名");
+            showResultDialog("无法报名考试", "请先完成在线报名。");
             return;
         }
         const data = formData(event.target);
         data.studentId = student.id;
-        await api("/api/exams/apply", { method: "POST", body: data });
-        toast("考试报名已提交，等待管理员审核");
-        await loadAll();
+        try {
+            await api("/api/exams/apply", { method: "POST", body: data });
+            await loadAll();
+            showResultDialog("考试报名已提交", "请等待管理员审核考试报名。");
+        } catch (error) {
+            showResultDialog("考试报名失败", error.message || "请稍后重试。");
+        }
     });
 }
 
@@ -115,10 +140,14 @@ function renderStudentExams() {
     `).join("") : `<p class="muted">暂无考试报名记录。</p>`;
 }
 
-// ========== Student Utility (used in student render) ==========
+// ========== Student Utility ==========
 
 async function cancelLesson(id) {
-    await api(`/api/lessons/${id}/cancel`, { method: "POST" });
-    toast("约课已取消");
-    await loadAll();
+    try {
+        await api(`/api/lessons/${id}/cancel`, { method: "POST" });
+        await loadAll();
+        showResultDialog("约课已取消", "该约课记录已取消。");
+    } catch (error) {
+        showResultDialog("取消失败", error.message || "请稍后重试。");
+    }
 }
