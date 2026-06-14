@@ -4,11 +4,15 @@ import com.example.drivingschool.dto.CoachAvailabilityRequest;
 import com.example.drivingschool.dto.CoachCreateRequest;
 import com.example.drivingschool.dto.CoachRecommendation;
 import com.example.drivingschool.dto.CoachUpdateRequest;
+import com.example.drivingschool.model.Account;
 import com.example.drivingschool.model.Coach;
 import com.example.drivingschool.model.Student;
+import com.example.drivingschool.repository.AccountRepository;
 import com.example.drivingschool.repository.CoachRepository;
 import com.example.drivingschool.repository.StudentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -22,10 +26,13 @@ import java.util.NoSuchElementException;
 public class CoachService {
     private final CoachRepository coachRepository;
     private final StudentRepository studentRepository;
+    private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public CoachService(CoachRepository coachRepository, StudentRepository studentRepository) {
+    public CoachService(CoachRepository coachRepository, StudentRepository studentRepository, AccountRepository accountRepository) {
         this.coachRepository = coachRepository;
         this.studentRepository = studentRepository;
+        this.accountRepository = accountRepository;
     }
 
     @Transactional(readOnly = true)
@@ -55,6 +62,21 @@ public class CoachService {
         coach.setAvatar(request.getAvatar() == null ? "" : request.getAvatar());
         coach.setRating(5.0);
         coach.setStatus("在岗");
+
+        // Create login account with phone as username and default password 123456
+        String phone = coach.getPhone();
+        if (phone != null && !phone.isBlank() && !accountRepository.existsByUsername(phone)) {
+            Account account = new Account();
+            account.setUsername(phone);
+            account.setPassword(passwordEncoder.encode("123456"));
+            account.setName(coach.getName());
+            account.setRole("COACH");
+            account = accountRepository.save(account);
+            coach.setAccountId(account.getId());
+            coach.setLoginUsername(phone);
+            coach.setLoginPassword("123456");
+        }
+
         return coachRepository.save(coach);
     }
 
@@ -179,6 +201,15 @@ public class CoachService {
         student.getCoachChangeLogs().add(logMsg);
         student.getProgressLogs().add(logMsg);
         return studentRepository.save(student);
+    }
+
+    public Coach updateCoachProfile(Coach coach) {
+        return coachRepository.save(coach);
+    }
+
+    public Coach getCoachByAccount(Long accountId) {
+        return coachRepository.findByAccountId(accountId)
+                .orElseThrow(() -> new NoSuchElementException("未找到该账号关联的教练"));
     }
 
     private Coach requireCoach(Long id) {

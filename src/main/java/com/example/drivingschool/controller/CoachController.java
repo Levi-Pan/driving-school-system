@@ -36,6 +36,11 @@ public class CoachController {
         return coachService.getCoach(id);
     }
 
+    @GetMapping("/coaches/by-account/{accountId}")
+    public Coach getCoachByAccount(@PathVariable Long accountId) {
+        return coachService.getCoachByAccount(accountId);
+    }
+
     @PostMapping("/coaches")
     public Coach createCoach(@RequestBody CoachCreateRequest request) {
         return coachService.createCoach(request);

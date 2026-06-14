@@ -3,6 +3,7 @@ package com.example.drivingschool.model;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Transient;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -21,6 +22,7 @@ public class Coach {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long accountId;
     private String name;
     private String phone;
     private String vehicleType;
@@ -44,8 +46,22 @@ public class Coach {
     @OrderColumn(name = "sort_order")
     private List<Long> studentIds = new ArrayList<>();
 
+    @Transient
+    private String loginUsername;
+    @Transient
+    private String loginPassword;
+
     public Coach() {
     }
+
+    public Long getAccountId() { return accountId; }
+    public void setAccountId(Long accountId) { this.accountId = accountId; }
+
+    public String getLoginUsername() { return loginUsername; }
+    public void setLoginUsername(String loginUsername) { this.loginUsername = loginUsername; }
+
+    public String getLoginPassword() { return loginPassword; }
+    public void setLoginPassword(String loginPassword) { this.loginPassword = loginPassword; }
 
     public Coach(Long id, String name, String phone, String vehicleType, double rating, int maxStudents, List<String> freeTimes) {
         this.id = id;

@@ -48,6 +48,23 @@ public class AuthService {
                 .orElseThrow(() -> new NoSuchElementException("账号不存在：" + username));
     }
 
+    public Account updateAccountName(Long accountId, String name) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("?????"));
+        account.setName(name);
+        return accountRepository.save(account);
+    }
+
+    public void changePassword(Long accountId, String oldPassword, String newPassword) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("?????"));
+        if (!passwordMatches(oldPassword, account.getPassword())) {
+            throw new IllegalArgumentException("??????");
+        }
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+    }
+
     private boolean passwordMatches(String rawPassword, String storedPassword) {
         if (isBcryptHash(storedPassword)) {
             return passwordEncoder.matches(rawPassword, storedPassword);

@@ -923,8 +923,19 @@ async function submitCoachForm() {
     };
     try {
         if (coachFormMode === "create") {
-            await api("/api/coaches", { method: "POST", body: data });
-            showResultDialog("新增成功", "教练「" + name + "」已成功添加。");
+            const result = await api("/api/coaches", { method: "POST", body: data });
+            if (result.loginUsername) {
+                $("#resultTitle").textContent = "新增成功";
+                $("#resultMessage").innerHTML =
+                    "教练\u300C" + name + "\u300D已成功添加。<br><br>" +
+                    "<strong>登录账号：</strong>" + result.loginUsername + "<br>" +
+                    "<strong>登录密码：</strong>" + result.loginPassword + "<br><br>" +
+                    "默认密码，请提醒教练首次登录后修改密码。";
+                resultDialogCallback = null;
+                $("#resultDialog").showModal();
+            } else {
+                showResultDialog("新增成功", "教练\u300C" + name + "\u300D已成功添加。");
+            }
         } else {
             await api(`/api/coaches/${coachFormEditId}`, { method: "PUT", body: data });
             showResultDialog("编辑成功", "教练「" + name + "」的信息已更新。");

@@ -17,6 +17,7 @@
         <button class="tab" data-view="progress">学时记录</button>
         <button class="tab" data-view="schedule">约课安排</button>
         <button class="tab" data-view="availability">空闲时间</button>
+        <button class="tab" data-view="profile">个人信息</button>
     </nav>
 </aside>
 
@@ -30,9 +31,19 @@
     </header>
 
     <section id="workbench" class="view active">
+        <div class="metrics" id="coachMetrics">
+            <div class="metric"><span>我的学员</span><strong id="metricStudents">0</strong></div>
+            <div class="metric"><span>今日课程</span><strong id="metricToday">0</strong></div>
+            <div class="metric"><span>本周学时</span><strong id="metricWeekHours">0</strong></div>
+            <div class="metric"><span>通过率</span><strong id="metricPassRate">-</strong></div>
+        </div>
         <section class="panel">
-            <div class="panel-title"><h2>我的学员</h2><label class="select-inline">选择教练<select id="coachPick"></select></label></div>
+            <div class="panel-title"><h2>我的学员</h2><span class="muted" id="coachTitleInfo"></span></div>
             <div id="coachStudentList" class="item-list"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-title"><h2>学员考试进度</h2></div>
+            <div id="coachExamList" class="item-list"></div>
         </section>
     </section>
 
@@ -61,12 +72,45 @@
         <section class="panel">
             <div class="panel-title"><h2>维护空闲时间</h2></div>
             <form id="availabilityForm" class="form-grid compact">
-                <label>教练<select name="coachId" id="availabilityCoach"></select></label>
+                <input name="coachId" id="availabilityCoach" type="hidden">
                 <label class="wide">空闲时间<input name="freeTimes" placeholder="例如：周一上午、周三下午、周六上午"></label>
                 <button class="primary" type="submit">保存空闲时间</button>
             </form>
             <div id="coachList" class="coach-grid spaced"></div>
         </section>
+    </section>
+    <section id="profile" class="view">
+        <div class="layout two">
+            <section class="panel">
+                <div class="panel-title"><h2>个人资料</h2></div>
+                <form id="profileForm" class="form-grid">
+                    <label class="upload-field">头像
+                        <input name="avatar" id="profileAvatar" type="hidden">
+                        <input id="avatarFile" type="file" accept="image/*" data-upload-target="profileAvatar" data-preview-target="avatarPreview">
+                        <span class="muted">选择图片后自动上传保存</span>
+                        <div class="upload-preview" id="avatarPreview">暂无已上传头像</div>
+                    </label>
+                    <label>姓名<input name="name" id="profileName" required></label>
+                    <label>手机号<input name="phone" id="profilePhone" readonly class="readonly-value"></label>
+                    <label>准教车型<select name="vehicleType" id="profileVehicleType"><option>C1</option><option>C2</option></select></label>
+                    <label>性别<select name="gender" id="profileGender"><option value="">选择性别</option><option>男</option><option>女</option></select></label>
+                    <label>教龄（年）<input name="yearsOfExperience" id="profileExperience" type="number" min="0"></label>
+                    <label class="wide">个人简介<textarea name="bio" id="profileBio" rows="3" placeholder="简要介绍自己.."></textarea></label>
+                    <label>状态<span class="readonly-value" id="profileStatus"></span></label>
+                    <div></div><div></div>
+                    <button class="primary" type="submit">保存资料</button>
+                </form>
+            </section>
+            <section class="panel">
+                <div class="panel-title"><h2>修改密码</h2></div>
+                <form id="passwordForm" class="form-grid compact">
+                    <label>当前密码<input name="oldPassword" type="password" required placeholder="输入当前密码"></label>
+                    <label>新密码<input name="newPassword" type="password" required placeholder="至少6位" minlength="6"></label>
+                    <label>确认新密码<input name="confirmPassword" type="password" required placeholder="再次输入新密码"></label>
+                    <button class="primary" type="submit">修改密码</button>
+                </form>
+            </section>
+        </div>
     </section>
 </main>
 
