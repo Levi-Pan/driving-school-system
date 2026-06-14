@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn compile *)"
+      "Bash(mvn compile *)",
+      "Bash(node -c src/main/resources/static/admin.js)",
+      "Bash(node -c src/main/resources/static/common.js)"
     ]
   }
 }

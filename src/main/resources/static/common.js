@@ -7,7 +7,9 @@ const state = {
     exams: [],
     stats: null,
     currentDoc: null,
-    currentAccount: null
+    currentAccount: null,
+    vehicleTypes: [],
+    examVenues: []
 };//用于测试注释
 
 let resultDialogCallback = null;
@@ -109,18 +111,22 @@ async function refreshPageData() {
 
 async function loadAll() {
     try {
-        const [students, coaches, lessons, exams, stats] = await Promise.all([
+        const [students, coaches, lessons, exams, stats, vehicleTypes, examVenues] = await Promise.all([
             api("/api/students"),
             api("/api/coaches"),
             api("/api/lessons"),
             api("/api/exams"),
-            api("/api/stats")
+            api("/api/stats"),
+            api("/api/vehicle-types").catch(() => []),
+            api("/api/exam-venues").catch(() => [])
         ]);
         state.students = students;
         state.coaches = coaches;
         state.lessons = lessons;
         state.exams = exams;
         state.stats = stats;
+        state.vehicleTypes = vehicleTypes;
+        state.examVenues = examVenues;
         renderRole();
         syncApplicationMaterials();
     } catch (error) {

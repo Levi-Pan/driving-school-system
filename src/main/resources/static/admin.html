@@ -19,6 +19,7 @@
         <button class="tab" data-view="coachManage">教练管理</button>
         <button class="tab" data-view="assign">教练分配</button>
         <button class="tab" data-view="exam">考试成绩</button>
+        <button class="tab" data-view="basicConfig">基础信息</button>
         <button class="tab" data-view="stats">统计导出</button>
     </nav>
 </aside>
@@ -144,6 +145,19 @@
         </section>
     </section>
 
+    <section id="basicConfig" class="view">
+        <div class="layout two">
+            <section class="panel">
+                <div class="panel-title"><h2>车型管理</h2><button class="primary" id="addVehicleTypeBtn">新增车型</button></div>
+                <div id="vehicleTypeList" class="item-list"></div>
+            </section>
+            <section class="panel">
+                <div class="panel-title"><h2>考场管理</h2><button class="primary" id="addExamVenueBtn">新增考场</button></div>
+                <div id="examVenueList" class="item-list"></div>
+            </section>
+        </div>
+    </section>
+
     <section id="stats" class="view">
         <div class="layout two">
             <section class="panel">
@@ -214,6 +228,33 @@
     <div class="dialog-head"><h2 id="studentDetailTitle">学员详情</h2><button class="icon-btn" id="closeStudentDetail" title="关闭">×</button></div>
     <div id="studentDetailBody" class="dialog-body" style="max-height:70vh;overflow-y:auto"></div>
     <div class="dialog-actions"><button class="primary" id="closeStudentDetailBtn">关闭</button></div>
+</dialog>
+<dialog id="vehicleTypeFormDialog">
+    <div class="dialog-head"><h2 id="vehicleTypeFormTitle">新增车型</h2><button class="icon-btn" id="closeVehicleTypeForm" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <div class="form-grid compact">
+            <label>车型代码（必填）<input type="text" id="vtName" placeholder="C1 / C2 / B2"></label>
+            <label>车型说明<input type="text" id="vtDesc" placeholder="小型汽车"></label>
+            <label>最小年龄<input type="number" id="vtMinAge" value="18" min="0"></label>
+            <label>最大年龄<input type="number" id="vtMaxAge" value="70" min="0"></label>
+            <label>总学时要求<input type="number" id="vtHours" value="68" min="0"></label>
+            <label>报名费（元）<input type="number" id="vtRegFee" value="3500" min="0"></label>
+            <label>考试费（元）<input type="number" id="vtExamFee" value="500" min="0"></label>
+        </div>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelVehicleTypeForm">取消</button><button class="primary" id="submitVehicleTypeForm">保存</button></div>
+</dialog>
+<dialog id="examVenueFormDialog">
+    <div class="dialog-head"><h2 id="examVenueFormTitle">新增考场</h2><button class="icon-btn" id="closeExamVenueForm" title="关闭">×</button></div>
+    <div class="dialog-body">
+        <div class="form-grid compact">
+            <label>考场名称（必填）<input type="text" id="evName" placeholder="考场名称"></label>
+            <label>考场地址<input type="text" id="evAddress" placeholder="详细地址"></label>
+        </div>
+        <label class="wide" style="margin-top:12px">可考科目（用、分隔）<input type="text" id="evSubjects" placeholder="科目一、科目四"></label>
+        <label class="wide" style="margin-top:8px">考试时间段（用、分隔）<input type="text" id="evTimeSlots" placeholder="上午 09:00、下午 14:00"></label>
+    </div>
+    <div class="dialog-actions"><button class="ghost" id="cancelExamVenueForm">取消</button><button class="primary" id="submitExamVenueForm">保存</button></div>
 </dialog>
 <dialog id="examRejectDialog">
     <div class="dialog-head"><h2>驳回考试报名</h2><button class="icon-btn" id="closeExamReject" title="关闭">×</button></div>
