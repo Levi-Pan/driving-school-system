@@ -19,6 +19,11 @@ let studentSearchKeyword = "";
 let studentStatusFilterVal = "";
 let studentVehicleFilterVal = "";
 
+let vehicleTypeFormMode = "create";
+let vehicleTypeFormEditId = null;
+let examVenueFormMode = "create";
+let examVenueFormEditId = null;
+
 // ========== Admin-Specific Bindings ==========
 
 function setupAdminActions() {
@@ -118,6 +123,16 @@ function setupAdminActions() {
     // 学员详情弹窗
     $("#closeStudentDetail")?.addEventListener("click", () => $("#studentDetailDialog").close());
     $("#closeStudentDetailBtn")?.addEventListener("click", () => $("#studentDetailDialog").close());
+    // 车型表单弹窗
+    $("#addVehicleTypeBtn")?.addEventListener("click", () => openVehicleTypeForm("create"));
+    $("#closeVehicleTypeForm")?.addEventListener("click", () => $("#vehicleTypeFormDialog").close());
+    $("#cancelVehicleTypeForm")?.addEventListener("click", () => $("#vehicleTypeFormDialog").close());
+    $("#submitVehicleTypeForm")?.addEventListener("click", submitVehicleTypeForm);
+    // 考场表单弹窗
+    $("#addExamVenueBtn")?.addEventListener("click", () => openExamVenueForm("create"));
+    $("#closeExamVenueForm")?.addEventListener("click", () => $("#examVenueFormDialog").close());
+    $("#cancelExamVenueForm")?.addEventListener("click", () => $("#examVenueFormDialog").close());
+    $("#submitExamVenueForm")?.addEventListener("click", submitExamVenueForm);
 }
 
 function bindAdminForms() {
@@ -136,6 +151,8 @@ function renderAdmin() {
     renderAssignedList();
     renderCoachCards();
     renderAdminExamList();
+    renderVehicleTypes();
+    renderExamVenues();
     renderStatusPills();
     drawRoleCharts();
 }
@@ -971,6 +988,191 @@ async function toggleCoachStatus(id, newStatus) {
     } catch (error) {
         showResultDialog("操作失败", error.message || "更新教练状态失败。");
     }
+}
+
+// ========== Basic Config (基础信息) ==========
+
+function renderVehicleTypes() {
+    if (!$("#vehicleTypeList")) return;
+    if (!state.vehicleTypes.length) {
+        $("#vehicleTypeList").innerHTML = `<p class="muted">暂无车型数据。</p>`;
+        return;
+    }
+    $("#vehicleTypeList").innerHTML = state.vehicleTypes.map((vt) => `
+        <article class="item">
+            <div>
+                <h3>${vt.name} ${vt.enabled ? '<span class="coach-status active">启用</span>' : '<span class="coach-status left">禁用</span>'}</h3>
+                <p>${vt.description || ""} · 年龄 ${vt.minAge}-${vt.maxAge}岁 · 学时 ${vt.requiredHours}h</p>
+                <p>报名费 ¥${vt.registrationFee ?? 0} · 考试费 ¥${vt.examFee ?? 0}</p>
+            </div>
+            <div class="actions">
+                <button class="ghost" onclick="openVehicleTypeForm('edit', ${vt.id})">编辑</button>
+                <button class="ghost" onclick="toggleVehicleType(${vt.id}, ${!vt.enabled})">${vt.enabled ? "禁用" : "启用"}</button>
+                <button class="danger" onclick="deleteVehicleType(${vt.id})">删除</button>
+            </div>
+        </article>
+    `).join("");
+}
+
+function renderExamVenues() {
+    if (!$("#examVenueList")) return;
+    if (!state.examVenues.length) {
+        $("#examVenueList").innerHTML = `<p class="muted">暂无考场数据。</p>`;
+        return;
+    }
+    $("#examVenueList").innerHTML = state.examVenues.map((v) => `
+        <article class="item">
+            <div>
+                <h3>${v.name} ${v.enabled ? '<span class="coach-status active">启用</span>' : '<span class="coach-status left">禁用</span>'}</h3>
+                <p>地址：${v.address || "未设置"}</p>
+                <p>可考科目：${(v.subjects || []).join("、") || "未设置"} · 时间段：${(v.timeSlots || []).join("、") || "未设置"}</p>
+            </div>
+            <div class="actions">
+                <button class="ghost" onclick="openExamVenueForm('edit', ${v.id})">编辑</button>
+                <button class="ghost" onclick="toggleExamVenue(${v.id}, ${!v.enabled})">${v.enabled ? "禁用" : "启用"}</button>
+                <button class="danger" onclick="deleteExamVenue(${v.id})">删除</button>
+            </div>
+        </article>
+    `).join("");
+}
+
+function openVehicleTypeForm(mode, id) {
+    vehicleTypeFormMode = mode;
+    vehicleTypeFormEditId = id || null;
+    if (mode === "edit") {
+        const vt = state.vehicleTypes.find((v) => v.id === id);
+        if (!vt) return;
+        $("#vehicleTypeFormTitle").textContent = "编辑车型";
+        $("#vtName").value = vt.name || "";
+        $("#vtDesc").value = vt.description || "";
+        $("#vtMinAge").value = vt.minAge || 18;
+        $("#vtMaxAge").value = vt.maxAge || 70;
+        $("#vtHours").value = vt.requiredHours || 68;
+        $("#vtRegFee").value = vt.registrationFee ?? 3500;
+        $("#vtExamFee").value = vt.examFee ?? 500;
+    } else {
+        $("#vehicleTypeFormTitle").textContent = "新增车型";
+        $("#vtName").value = ""; $("#vtDesc").value = "";
+        $("#vtMinAge").value = 18; $("#vtMaxAge").value = 70;
+        $("#vtHours").value = 68; $("#vtRegFee").value = 3500; $("#vtExamFee").value = 500;
+    }
+    $("#vehicleTypeFormDialog").showModal();
+}
+
+async function submitVehicleTypeForm() {
+    const name = $("#vtName").value.trim();
+    if (!name) { toast("车型代码不能为空"); return; }
+    const data = {
+        name,
+        description: $("#vtDesc").value.trim(),
+        minAge: Number($("#vtMinAge").value) || 0,
+        maxAge: Number($("#vtMaxAge").value) || 0,
+        requiredHours: Number($("#vtHours").value) || 0,
+        registrationFee: Number($("#vtRegFee").value) || 0,
+        examFee: Number($("#vtExamFee").value) || 0
+    };
+    try {
+        if (vehicleTypeFormMode === "create") {
+            await api("/api/vehicle-types", { method: "POST", body: data });
+            showResultDialog("新增成功", `车型「${name}」已添加。`);
+        } else {
+            await api(`/api/vehicle-types/${vehicleTypeFormEditId}`, { method: "PUT", body: data });
+            showResultDialog("编辑成功", `车型「${name}」已更新。`);
+        }
+        $("#vehicleTypeFormDialog").close();
+        await loadAll();
+    } catch (error) {
+        showResultDialog("操作失败", error.message || "保存车型失败。");
+    }
+}
+
+async function toggleVehicleType(id, enabled) {
+    try {
+        await api(`/api/vehicle-types/${id}/toggle?enabled=${enabled}`, { method: "PUT" });
+        toast(enabled ? "已启用" : "已禁用");
+        await loadAll();
+    } catch (error) {
+        showResultDialog("操作失败", error.message);
+    }
+}
+
+async function deleteVehicleType(id) {
+    const vt = state.vehicleTypes.find((v) => v.id === id);
+    showResultDialog("确认删除", `确定删除车型「${vt?.name || ""}」吗？`, async () => {
+        try {
+            await api(`/api/vehicle-types/${id}`, { method: "DELETE" });
+            showResultDialog("删除成功", `车型「${vt?.name || ""}」已删除。`);
+            await loadAll();
+        } catch (error) {
+            showResultDialog("删除失败", error.message);
+        }
+    });
+}
+
+function openExamVenueForm(mode, id) {
+    examVenueFormMode = mode;
+    examVenueFormEditId = id || null;
+    if (mode === "edit") {
+        const v = state.examVenues.find((x) => x.id === id);
+        if (!v) return;
+        $("#examVenueFormTitle").textContent = "编辑考场";
+        $("#evName").value = v.name || "";
+        $("#evAddress").value = v.address || "";
+        $("#evSubjects").value = (v.subjects || []).join("、");
+        $("#evTimeSlots").value = (v.timeSlots || []).join("、");
+    } else {
+        $("#examVenueFormTitle").textContent = "新增考场";
+        $("#evName").value = ""; $("#evAddress").value = "";
+        $("#evSubjects").value = ""; $("#evTimeSlots").value = "";
+    }
+    $("#examVenueFormDialog").showModal();
+}
+
+async function submitExamVenueForm() {
+    const name = $("#evName").value.trim();
+    if (!name) { toast("考场名称不能为空"); return; }
+    const data = {
+        name,
+        address: $("#evAddress").value.trim(),
+        subjects: $("#evSubjects").value.split(/[、,，]/).map((s) => s.trim()).filter(Boolean),
+        timeSlots: $("#evTimeSlots").value.split(/[、,，]/).map((s) => s.trim()).filter(Boolean)
+    };
+    try {
+        if (examVenueFormMode === "create") {
+            await api("/api/exam-venues", { method: "POST", body: data });
+            showResultDialog("新增成功", `考场「${name}」已添加。`);
+        } else {
+            await api(`/api/exam-venues/${examVenueFormEditId}`, { method: "PUT", body: data });
+            showResultDialog("编辑成功", `考场「${name}」已更新。`);
+        }
+        $("#examVenueFormDialog").close();
+        await loadAll();
+    } catch (error) {
+        showResultDialog("操作失败", error.message || "保存考场失败。");
+    }
+}
+
+async function toggleExamVenue(id, enabled) {
+    try {
+        await api(`/api/exam-venues/${id}/toggle?enabled=${enabled}`, { method: "PUT" });
+        toast(enabled ? "已启用" : "已禁用");
+        await loadAll();
+    } catch (error) {
+        showResultDialog("操作失败", error.message);
+    }
+}
+
+async function deleteExamVenue(id) {
+    const v = state.examVenues.find((x) => x.id === id);
+    showResultDialog("确认删除", `确定删除考场「${v?.name || ""}」吗？`, async () => {
+        try {
+            await api(`/api/exam-venues/${id}`, { method: "DELETE" });
+            showResultDialog("删除成功", `考场「${v?.name || ""}」已删除。`);
+            await loadAll();
+        } catch (error) {
+            showResultDialog("删除失败", error.message);
+        }
+    });
 }
 
 // ========== Admin Init Hook ==========
