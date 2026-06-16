@@ -90,6 +90,8 @@
             <form id="examForm" class="form-grid">
                 <label>科目<select name="subject"><option>科目一</option><option>科目二</option><option>科目三</option><option>科目四</option></select></label>
                 <label>考试时间<input name="examTime" type="datetime-local"></label>
+                <label>考场<select name="venue" id="examVenueSelect"><option value="">请选择考场</option></select></label>
+                <label>考场地址<input id="examVenueAddress" readonly placeholder="选择考场后自动填入" style="background:#f5f5f5;color:#666"></label>
                 <button class="primary" type="submit">报名考试</button>
             </form>
             <div id="studentExamList" class="item-list spaced"></div>

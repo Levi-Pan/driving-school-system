@@ -94,6 +94,7 @@ async function renderStudent() {
     } catch (e) {
         // 静默失败，renderVehicleTypeSelect 会做后备
     }
+    renderExamVenues();
     renderApplyForm();
     renderVehicleTypeSelect(); // 后备
     renderStudentStatus();
@@ -239,6 +240,22 @@ function renderStudentDocuments() {
             ${subjects.map((s) => `<button class="ghost" onclick="showStudentTicket(${student.id}, '${s}')">${s} 准考证</button>`).join("")}
         </div>
     `;
+}
+
+function renderExamVenues() {
+    const sel = document.getElementById("examVenueSelect");
+    const addr = document.getElementById("examVenueAddress");
+    if (!sel) return;
+    var venues = (state.examVenues || []).filter(function(v) { return v.enabled !== false; });
+    sel.innerHTML = '<option value="">请选择考场</option>' + venues.map(function(v) {
+        return '<option value="' + v.name + '">' + v.name + '</option>';
+    }).join("");
+    if (addr) {
+        sel.onchange = function() {
+            var selected = venues.find(function(v) { return v.name === sel.value; });
+            addr.value = selected ? selected.address : "";
+        };
+    }
 }
 
 /** 渲染车型下拉：从管理端车型管理同步，仅显示启用的车型 */
