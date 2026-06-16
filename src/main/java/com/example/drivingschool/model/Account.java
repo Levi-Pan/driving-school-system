@@ -19,6 +19,7 @@ public class Account {
     private String password;
     private String name;
     private String role;
+    private String phone; // 手机号（学员/教练必填，作为身份识别；管理员可空）
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Account() {
@@ -71,6 +72,14 @@ public class Account {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public LocalDateTime getCreatedAt() {

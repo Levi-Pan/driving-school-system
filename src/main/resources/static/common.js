@@ -414,6 +414,16 @@ function yesNo(value) {
     return value ? "已生成" : "未生成";
 }
 
+/** 教练头像 HTML：有头像显示图片，无头像显示首字母默认头像 */
+function coachAvatarHtml(coach) {
+    if (!coach) return "";
+    if (coach.avatar && coach.avatar.startsWith("/uploads/")) {
+        return `<img class="coach-avatar" src="${coach.avatar}" alt="${coach.name}">`;
+    }
+    const initial = ((coach.name || "?").trim().charAt(0)) || "?";
+    return `<div class="coach-avatar coach-avatar-default">${initial}</div>`;
+}
+
 function studentName(id) {
     return state.students.find((student) => student.id === id)?.name || `学员${id}`;
 }

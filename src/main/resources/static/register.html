@@ -38,9 +38,11 @@
         <label for="name">姓名</label>
         <input type="text" placeholder="请输入姓名" id="name" name="name" required>
         <label for="username">账号</label>
-        <input type="text" placeholder="请输入账号" id="username" name="username" required autocomplete="username">
+        <input type="text" placeholder="请输入自定义账号" id="username" name="username" required autocomplete="username">
+        <label for="phone" id="phoneLabel">手机号</label>
+        <input type="tel" placeholder="请输入11位手机号" id="phone" name="phone" maxlength="11" pattern="\d{11}">
         <label for="password">密码</label>
-        <input type="password" placeholder="请输入密码" id="password" name="password" required autocomplete="new-password">
+        <input type="password" placeholder="请输入密码（至少6位）" id="password" name="password" required minlength="6" autocomplete="new-password">
         <label for="role">角色</label>
         <select id="role" name="role">
             <option value="STUDENT">学员</option>

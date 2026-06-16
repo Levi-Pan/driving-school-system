@@ -567,6 +567,7 @@ function renderCoachCards() {
     }
     $("#coachList").innerHTML = state.coaches.map((coach) => `
         <article class="coach-card">
+            ${coachAvatarHtml(coach)}
             <strong>${coach.name} ${coachStatusTag(coach.status || "在岗")}</strong>
             <span>${coach.vehicleType || "未知"} · 评分 ${coach.rating}</span>
             <span>带学员 ${coach.workload}/${coach.maxStudents} · 空闲 ${coach.freeSlots}</span>
@@ -882,6 +883,7 @@ function renderCoachManage() {
         return `
         <article class="coach-manage-card">
             <div class="coach-header">
+                ${coachAvatarHtml(coach)}
                 <div class="coach-info">
                     <strong>${coach.name} ${coachStatusTag(coach.status || "在岗")}</strong>
                     <span>${coach.vehicleType || "C1"} · 评分 ${coach.rating} · 从业 ${coach.yearsOfExperience || 0} 年 · 可带 ${coach.maxStudents} 人</span>
@@ -945,27 +947,64 @@ async function submitCoachForm() {
         yearsOfExperience: Number($("#coachYears").value) || 0,
         bio: $("#coachBio").value.trim()
     };
+
+    // 实际调用后端创建教练
+    async function doCreate() {
+        const result = await api("/api/coaches", { method: "POST", body: data });
+        if (result.loginUsername && result.loginPassword) {
+            $("#resultTitle").textContent = "新增成功";
+            $("#resultMessage").innerHTML =
+                "教练「" + name + "」已成功添加。<br><br>" +
+                "<strong>登录账号：</strong>" + result.loginUsername + "<br>" +
+                "<strong>登录密码：</strong>" + result.loginPassword + "<br><br>" +
+                "默认密码，请提醒教练首次登录后修改密码。";
+            resultDialogCallback = null;
+            $("#resultDialog").showModal();
+        } else if (result.loginUsername) {
+            // 复用已有账号（不展示密码）
+            showResultDialog("新增成功", "教练「" + name + "」已关联现有账号（" + result.loginUsername + "），可使用该账号登录。");
+        } else {
+            showResultDialog("新增成功", "教练「" + name + "」已成功添加。");
+        }
+        $("#coachFormDialog").close();
+        await loadAll();
+    }
+
     try {
         if (coachFormMode === "create") {
-            const result = await api("/api/coaches", { method: "POST", body: data });
-            if (result.loginUsername) {
-                $("#resultTitle").textContent = "新增成功";
-                $("#resultMessage").innerHTML =
-                    "教练\u300C" + name + "\u300D已成功添加。<br><br>" +
-                    "<strong>登录账号：</strong>" + result.loginUsername + "<br>" +
-                    "<strong>登录密码：</strong>" + result.loginPassword + "<br><br>" +
-                    "默认密码，请提醒教练首次登录后修改密码。";
-                resultDialogCallback = null;
-                $("#resultDialog").showModal();
+            // 新增教练前，按手机号判断教练是否已存在于系统
+            if (!data.phone) {
+                toast("请输入教练手机号");
+                return;
+            }
+            const check = await api(`/api/coaches/check-phone?phone=${encodeURIComponent(data.phone)}`);
+            if (check.coachExists) {
+                showResultDialog("无法新增", "手机号 " + data.phone + " 已存在教练记录，请勿重复新增。");
+                return;
+            }
+            if (check.accountExists) {
+                // 已有账号（无教练记录）→ 直接新增，关联该账号
+                await doCreate();
             } else {
-                showResultDialog("新增成功", "教练\u300C" + name + "\u300D已成功添加。");
+                // 系统中暂无此手机号账号 → 弹确认框，是否自动创建教练账号
+                showResultDialog(
+                    "确认新增教练账号",
+                    "手机号 " + data.phone + " 暂未注册账号。是否自动创建教练账号？（账号即手机号，默认密码 123456）",
+                    async () => {
+                        try {
+                            await doCreate();
+                        } catch (error) {
+                            showResultDialog("操作失败", error.message || "保存教练信息失败。");
+                        }
+                    }
+                );
             }
         } else {
             await api(`/api/coaches/${coachFormEditId}`, { method: "PUT", body: data });
             showResultDialog("编辑成功", "教练「" + name + "」的信息已更新。");
+            $("#coachFormDialog").close();
+            await loadAll();
         }
-        $("#coachFormDialog").close();
-        await loadAll();
     } catch (error) {
         showResultDialog("操作失败", error.message || "保存教练信息失败。");
     }

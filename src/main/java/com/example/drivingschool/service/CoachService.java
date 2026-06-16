@@ -42,6 +42,21 @@ public class CoachService {
                 .toList();
     }
 
+    /**
+     * 检查手机号：是否已有账号、是否已有教练记录（供管理端新增教练前判断）
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Boolean> checkPhone(String phone) {
+        boolean accountExists = phone != null && !phone.isBlank()
+                && accountRepository.findByPhone(phone).isPresent();
+        boolean coachExists = false;
+        if (accountExists) {
+            coachExists = coachRepository.findAll().stream()
+                    .anyMatch(c -> phone.equals(c.getPhone()));
+        }
+        return java.util.Map.of("accountExists", accountExists, "coachExists", coachExists);
+    }
+
     @Transactional(readOnly = true)
     public Coach getCoach(Long coachId) {
         return requireCoach(coachId);
@@ -63,18 +78,33 @@ public class CoachService {
         coach.setRating(5.0);
         coach.setStatus("在岗");
 
-        // Create login account with phone as username and default password 123456
+        // 账号逻辑：按手机号(Account.phone)判断教练是否已存在于系统
         String phone = coach.getPhone();
-        if (phone != null && !phone.isBlank() && !accountRepository.existsByUsername(phone)) {
-            Account account = new Account();
-            account.setUsername(phone);
-            account.setPassword(passwordEncoder.encode("123456"));
-            account.setName(coach.getName());
-            account.setRole("COACH");
-            account = accountRepository.save(account);
-            coach.setAccountId(account.getId());
-            coach.setLoginUsername(phone);
-            coach.setLoginPassword("123456");
+        if (phone != null && !phone.isBlank()) {
+            Account existing = accountRepository.findByPhone(phone).orElse(null);
+            if (existing != null) {
+                // 系统已有该手机号账号 → 复用该账号，关联到教练
+                coach.setAccountId(existing.getId());
+                // 同步账号姓名
+                if (!coach.getName().equals(existing.getName())) {
+                    existing.setName(coach.getName());
+                    accountRepository.save(existing);
+                }
+                coach.setLoginUsername(existing.getUsername());
+                coach.setLoginPassword(""); // 复用已有账号，不展示密码
+            } else {
+                // 系统无此手机号账号 → 新建账号（账号=手机号，密码默认 123456）
+                Account account = new Account();
+                account.setUsername(phone);
+                account.setPassword(passwordEncoder.encode("123456"));
+                account.setName(coach.getName());
+                account.setRole("COACH");
+                account.setPhone(phone);
+                account = accountRepository.save(account);
+                coach.setAccountId(account.getId());
+                coach.setLoginUsername(phone);
+                coach.setLoginPassword("123456");
+            }
         }
 
         return coachRepository.save(coach);
@@ -82,14 +112,40 @@ public class CoachService {
 
     public Coach updateCoach(Long id, CoachUpdateRequest request) {
         Coach coach = requireCoach(id);
-        if (request.getName() != null && !request.getName().isBlank()) coach.setName(request.getName());
-        if (request.getPhone() != null) coach.setPhone(request.getPhone());
+        String newName = request.getName();
+        String newPhone = request.getPhone();
+
+        // 更新 Coach 字段
+        if (newName != null && !newName.isBlank()) coach.setName(newName);
+        if (newPhone != null) coach.setPhone(newPhone);
         if (request.getVehicleType() != null && !request.getVehicleType().isBlank()) coach.setVehicleType(request.getVehicleType());
         if (request.getMaxStudents() != null && request.getMaxStudents() > 0) coach.setMaxStudents(request.getMaxStudents());
         if (request.getGender() != null) coach.setGender(request.getGender());
         if (request.getYearsOfExperience() != null) coach.setYearsOfExperience(request.getYearsOfExperience());
         if (request.getBio() != null) coach.setBio(request.getBio());
         if (request.getAvatar() != null) coach.setAvatar(request.getAvatar());
+
+        // 双向同步：如果有关联账号，同步更新 Account.name 和 Account.phone
+        if (coach.getAccountId() != null) {
+            accountRepository.findById(coach.getAccountId()).ifPresent(account -> {
+                // 同步姓名
+                if (newName != null && !newName.isBlank()) {
+                    account.setName(newName);
+                }
+                // 同步手机号（存入 Account.phone）
+                if (newPhone != null && !newPhone.isBlank() && !newPhone.equals(account.getPhone())) {
+                    // 检查新手机号是否已被其他账号占用
+                    accountRepository.findByPhone(newPhone).ifPresent(other -> {
+                        if (!other.getId().equals(account.getId())) {
+                            throw new IllegalArgumentException("手机号 " + newPhone + " 已被其他账号使用，无法更新");
+                        }
+                    });
+                    account.setPhone(newPhone);
+                }
+                accountRepository.save(account);
+            });
+        }
+
         return coachRepository.save(coach);
     }
 

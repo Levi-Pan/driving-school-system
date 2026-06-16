@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -39,6 +40,11 @@ public class CoachController {
     @GetMapping("/coaches/by-account/{accountId}")
     public Coach getCoachByAccount(@PathVariable Long accountId) {
         return coachService.getCoachByAccount(accountId);
+    }
+
+    @GetMapping("/coaches/check-phone")
+    public Map<String, Boolean> checkPhone(@RequestParam String phone) {
+        return coachService.checkPhone(phone);
     }
 
     @PostMapping("/coaches")

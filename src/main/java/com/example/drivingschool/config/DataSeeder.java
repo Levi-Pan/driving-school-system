@@ -1,11 +1,10 @@
 package com.example.drivingschool.config;
 
+import com.example.drivingschool.dto.CoachCreateRequest;
 import com.example.drivingschool.dto.ProgressRequest;
 import com.example.drivingschool.dto.ReviewRequest;
 import com.example.drivingschool.dto.StudentApplicationRequest;
 import com.example.drivingschool.model.Coach;
-import com.example.drivingschool.dto.ReviewRequest;
-import com.example.drivingschool.dto.StudentApplicationRequest;
 import com.example.drivingschool.model.Student;
 import com.example.drivingschool.model.VehicleType;
 import com.example.drivingschool.model.ExamVenue;
@@ -93,9 +92,36 @@ public class DataSeeder {
             return;
         }
 
-        Coach coachA = coachRepository.save(new Coach(null, "王教练", "13800001111", "C1", 4.9, 8, List.of("周一上午", "周三下午", "周六上午")));
-        coachRepository.save(new Coach(null, "李教练", "13800002222", "C1", 4.7, 6, List.of("周二上午", "周四下午")));
-        coachRepository.save(new Coach(null, "赵教练", "13800003333", "C2", 4.8, 5, List.of("周一下午", "周五上午")));
+        // 创建种子教练（通过 CoachService.createCoach，自动创建登录账号）
+        CoachCreateRequest coachAReq = new CoachCreateRequest();
+        coachAReq.setName("王教练");
+        coachAReq.setPhone("13800001111");
+        coachAReq.setVehicleType("C1");
+        coachAReq.setMaxStudents(8);
+        Coach coachA = coachService.createCoach(coachAReq);
+        coachA.setRating(4.9);
+        coachA.setFreeTimes(List.of("周一上午", "周三下午", "周六上午"));
+        coachRepository.save(coachA);
+
+        CoachCreateRequest coachBReq = new CoachCreateRequest();
+        coachBReq.setName("李教练");
+        coachBReq.setPhone("13800002222");
+        coachBReq.setVehicleType("C1");
+        coachBReq.setMaxStudents(6);
+        Coach coachB = coachService.createCoach(coachBReq);
+        coachB.setRating(4.7);
+        coachB.setFreeTimes(List.of("周二上午", "周四下午"));
+        coachRepository.save(coachB);
+
+        CoachCreateRequest coachCReq = new CoachCreateRequest();
+        coachCReq.setName("赵教练");
+        coachCReq.setPhone("13800003333");
+        coachCReq.setVehicleType("C2");
+        coachCReq.setMaxStudents(5);
+        Coach coachC = coachService.createCoach(coachCReq);
+        coachC.setRating(4.8);
+        coachC.setFreeTimes(List.of("周一下午", "周五上午"));
+        coachRepository.save(coachC);
 
         StudentApplicationRequest first = new StudentApplicationRequest();
         first.setName("张明");

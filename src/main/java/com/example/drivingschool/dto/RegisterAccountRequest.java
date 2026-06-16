@@ -5,6 +5,7 @@ public class RegisterAccountRequest {
     private String password;
     private String name;
     private String role;
+    private String phone;
 
     public String getUsername() {
         return username;
@@ -36,5 +37,13 @@ public class RegisterAccountRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }

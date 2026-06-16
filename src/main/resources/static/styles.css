@@ -887,8 +887,33 @@ dialog::backdrop {
 
 .coach-manage-card .coach-header {
     display: flex;
-    justify-content: space-between;
+    gap: 14px;
     align-items: center;
+}
+
+.coach-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+}
+
+.coach-avatar-default {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 600;
+    border: none;
+}
+
+.coach-card .coach-avatar {
+    display: block;
+    margin-bottom: 6px;
 }
 
 .coach-manage-card .coach-info {

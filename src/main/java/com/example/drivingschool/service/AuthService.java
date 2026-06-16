@@ -25,7 +25,21 @@ public class AuthService {
         if (accountRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("账号已存在");
         }
-        Account account = new Account(null, request.getUsername(), passwordEncoder.encode(request.getPassword()), request.getName(), normalizeRole(request.getRole()));
+        String role = normalizeRole(request.getRole());
+        String phone = request.getPhone() == null ? "" : request.getPhone().trim();
+        // 学员/教练必须填写正确的手机号，且手机号唯一
+        if (!"ADMIN".equals(role)) {
+            if (!phone.matches("^1\\d{10}$")) {
+                throw new IllegalArgumentException("请输入正确的11位手机号");
+            }
+            if (accountRepository.findByPhone(phone).isPresent()) {
+                throw new IllegalArgumentException("该手机号已被注册");
+            }
+        } else {
+            phone = ""; // 管理员不需要手机号
+        }
+        Account account = new Account(null, request.getUsername(), passwordEncoder.encode(request.getPassword()), request.getName(), role);
+        account.setPhone(phone);
         return accountRepository.save(account);
     }
 
