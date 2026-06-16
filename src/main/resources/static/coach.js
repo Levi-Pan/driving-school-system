@@ -6,6 +6,13 @@ function bindCoachForms() {
         const submitButton = event.target.querySelector("button[type=submit]");
         const originalText = submitButton?.textContent || "保存进度";
         const data = formData(event.target);
+        // 必须通过完成约课才能录入学时
+        if (!state.pendingProgressStudentId || state.pendingProgressStudentId !== Number(data.studentId)) {
+            showResultDialog("操作受限", "请先完成约课后才能录入学时记录。");
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = originalText; }
+            return;
+        }
+        state.pendingProgressStudentId = null;
         const studentId = data.studentId;
         delete data.studentId;
         data.hours = Number(data.hours);
@@ -146,7 +153,7 @@ function renderCoachLessons() {
                 <p>${lesson.lessonDate} ${lesson.timeRange} · ${lesson.note}</p>
             </div>
             <div class="actions">
-                ${lesson.status === "已预约" ? `<button class="primary" onclick="completeCoachLesson('${lesson.id}')">完成本次教学</button>` : ""}
+                ${lesson.status === "已预约" ? `<button class="primary" onclick="completeCoachLesson('${lesson.id}', ${lesson.studentId})">完成本次教学</button>` : ""}
                 ${lesson.status === "已预约" ? `<button class="ghost" onclick="cancelCoachLesson('${lesson.id}')">取消约课</button>` : ""}
             </div>
         </article>
@@ -260,13 +267,27 @@ async function cancelCoachLesson(id) {
 }
 
 
-async function completeCoachLesson(id) {
+async function completeCoachLesson(id, studentId) {
     try {
         await api("/api/lessons/" + id + "/complete", { method: "POST" });
         await loadAll();
-        showResultDialog("教学已完成", "本次教学已标记完成，记得在进度管理中录入学时。");
+        state.pendingProgressStudentId = Number(studentId);
+        recordProgressAfterLesson(studentId);
     } catch (error) {
         showResultDialog("操作失败", error.message || "请稍后重试。");
+    }
+}
+
+function recordProgressAfterLesson(studentId) {
+    $$("aside .tab").forEach(function(t) { t.classList.remove("active"); });
+    $$(".view").forEach(function(v) { v.classList.remove("active"); });
+    var tab = document.querySelector('[data-view="progress"]');
+    if (tab) tab.classList.add("active");
+    var view = document.getElementById("progress");
+    if (view) view.classList.add("active");
+    var sel = document.getElementById("progressStudent");
+    if (sel && studentId) {
+        setTimeout(function() { sel.value = studentId; }, 100);
     }
 }
 
