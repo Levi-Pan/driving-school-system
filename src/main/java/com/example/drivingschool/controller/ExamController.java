@@ -64,6 +64,11 @@ public class ExamController {
         return examService.examTicket(id);
     }
 
+    @GetMapping("/students/{studentId}/ticket")
+    public Map<String, String> studentTicket(@PathVariable Long studentId, @RequestParam String subject) {
+        return examService.studentTicketBySubject(studentId, subject);
+    }
+
     @PostMapping("/students/{id}/certificate")
     public Student registerCertificate(@PathVariable Long id) {
         return examService.registerCertificate(id);
