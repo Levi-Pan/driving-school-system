@@ -197,6 +197,11 @@ function syncCurrentAccountToForms() {
             applicationNameText.textContent = "未获取到注册姓名，请重新登录";
         }
     }
+    // 用注册手机号回填报名表单电话字段
+    const applicationPhone = $("#applicationPhone");
+    if (applicationPhone && state.currentAccount?.phone) {
+        applicationPhone.value = state.currentAccount.phone;
+    }
 }
 
 function refreshCurrentStudentViews() {
