@@ -3,7 +3,9 @@ package com.example.drivingschool.service;
 import com.example.drivingschool.dto.LoginRequest;
 import com.example.drivingschool.dto.RegisterAccountRequest;
 import com.example.drivingschool.model.Account;
+import com.example.drivingschool.model.Coach;
 import com.example.drivingschool.repository.AccountRepository;
+import com.example.drivingschool.repository.CoachRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,10 +17,12 @@ import java.util.NoSuchElementException;
 @Transactional
 public class AuthService {
     private final AccountRepository accountRepository;
+    private final CoachRepository coachRepository;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public AuthService(AccountRepository accountRepository) {
+    public AuthService(AccountRepository accountRepository, CoachRepository coachRepository) {
         this.accountRepository = accountRepository;
+        this.coachRepository = coachRepository;
     }
 
     public Account registerAccount(RegisterAccountRequest request) {
@@ -40,7 +44,18 @@ public class AuthService {
         }
         Account account = new Account(null, request.getUsername(), passwordEncoder.encode(request.getPassword()), request.getName(), role);
         account.setPhone(phone);
-        return accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
+        // 自注册教练时自动创建 Coach 实体，便于管理员管理和手机号展示
+        if ("COACH".equals(role)) {
+            Coach coach = new Coach();
+            coach.setAccountId(savedAccount.getId());
+            coach.setName(savedAccount.getName());
+            coach.setPhone(savedAccount.getPhone());
+            coach.setVehicleType("C1");
+            coach.setMaxStudents(30);
+            coachRepository.save(coach);
+        }
+        return savedAccount;
     }
 
     public Account login(LoginRequest request) {

@@ -1,4 +1,4 @@
-// ========== Coach Forms ==========
+﻿// ========== Coach Forms ==========
 
 function bindCoachForms() {
     $("#progressForm")?.addEventListener("submit", async (event) => {
@@ -192,7 +192,7 @@ function renderCoachProfile() {
     if (!coach) return;
     document.getElementById("profileName").value = coach.name || "";
     document.getElementById("profileBio").value = coach.bio || "";
-    document.getElementById("profilePhone").value = coach.phone || "";
+    document.getElementById("profilePhone").value = coach.phone || state.currentAccount?.phone || "";
     document.getElementById("profileVehicleType").value = coach.vehicleType || "C1";
     document.getElementById("profileGender").value = coach.gender || "";
     document.getElementById("profileExperience").value = coach.yearsOfExperience || 0;
