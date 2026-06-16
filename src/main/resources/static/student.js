@@ -72,13 +72,30 @@ function bindStudentForms() {
 
 // ========== Student Render ==========
 
-function renderStudent() {
+async function renderStudent() {
     // 从注册账号预填手机号
     const phoneInput = document.querySelector("#applyForm [name=phone]");
     if (phoneInput && state.currentAccount?.phone) {
         phoneInput.value = state.currentAccount.phone;
     }
+    // 直接获取车型数据填充下拉
+    try {
+        const types = await api("/api/vehicle-types");
+        const select = document.querySelector("#vehicleTypeSelect");
+        if (select && types && types.length > 0) {
+            const enabledTypes = types.filter(t => t.enabled !== false);
+            if (enabledTypes.length > 0) {
+                select.innerHTML = enabledTypes.map(t =>
+                    `<option value="${t.name}">${t.name}${t.description ? " · " + t.description : ""}</option>
+`
+                ).join("");
+            }
+        }
+    } catch (e) {
+        // 静默失败，renderVehicleTypeSelect 会做后备
+    }
     renderApplyForm();
+    renderVehicleTypeSelect(); // 后备
     renderStudentStatus();
     renderStudentLessons();
     renderStudentExams();
