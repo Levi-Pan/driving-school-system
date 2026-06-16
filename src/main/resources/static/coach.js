@@ -150,10 +150,10 @@ function renderCoachLessons() {
         <article class="item">
             <div>
                 <h3>${studentName(lesson.studentId)} ${statusTag(lesson.status)}</h3>
-                <p>${lesson.lessonDate} ${lesson.timeRange} · ${lesson.note}</p>
+                <p>${lesson.lessonDate} ${lesson.timeRange} · ${lesson.subject || "未指定"} · ${lesson.note}</p>
             </div>
             <div class="actions">
-                ${lesson.status === "已预约" ? `<button class="primary" onclick="completeCoachLesson('${lesson.id}', ${lesson.studentId})">完成本次教学</button>` : ""}
+                ${lesson.status === "已预约" ? `<button class="primary" onclick="completeCoachLesson('${lesson.id}', ${lesson.studentId}, '${lesson.subject || ""}')">完成本次教学</button>` : ""}
                 ${lesson.status === "已预约" ? `<button class="ghost" onclick="cancelCoachLesson('${lesson.id}')">取消约课</button>` : ""}
             </div>
         </article>
@@ -267,18 +267,18 @@ async function cancelCoachLesson(id) {
 }
 
 
-async function completeCoachLesson(id, studentId) {
+async function completeCoachLesson(id, studentId, subject) {
     try {
         await api("/api/lessons/" + id + "/complete", { method: "POST" });
         await loadAll();
         state.pendingProgressStudentId = Number(studentId);
-        recordProgressAfterLesson(studentId);
+        recordProgressAfterLesson(studentId, subject);
     } catch (error) {
         showResultDialog("操作失败", error.message || "请稍后重试。");
     }
 }
 
-function recordProgressAfterLesson(studentId) {
+function recordProgressAfterLesson(studentId, subject) {
     $$("aside .tab").forEach(function(t) { t.classList.remove("active"); });
     $$(".view").forEach(function(v) { v.classList.remove("active"); });
     var tab = document.querySelector('[data-view="progress"]');
@@ -288,6 +288,17 @@ function recordProgressAfterLesson(studentId) {
     var sel = document.getElementById("progressStudent");
     if (sel && studentId) {
         setTimeout(function() { sel.value = studentId; }, 100);
+    }
+    if (subject) {
+        var subjEl = document.querySelector("#progressForm [name=subject]");
+        if (subjEl) {
+            setTimeout(function() { subjEl.value = subject; }, 150);
+        }
+        var stageMap = {"科目一":"科目一学习","科目二":"科目二训练","科目三":"科目三训练","科目四":"科目四学习"};
+        var stageEl = document.querySelector("#progressForm [name=stage]");
+        if (stageEl && stageMap[subject]) {
+            setTimeout(function() { stageEl.value = stageMap[subject]; }, 200);
+        }
     }
 }
 

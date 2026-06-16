@@ -21,6 +21,7 @@ public class LessonBooking {
     private String timeRange;
     private String status = "已预约";
     private String note = "";
+    private String subject = "";
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Long getId() {
@@ -78,6 +79,9 @@ public class LessonBooking {
     public void setNote(String note) {
         this.note = note;
     }
+
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

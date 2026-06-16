@@ -32,6 +32,7 @@ public class LessonService {
         lesson.setCoachId(student.getCoachId());
         lesson.setLessonDate(request.getLessonDate());
         lesson.setTimeRange(request.getTimeRange());
+        lesson.setSubject(request.getSubject() != null ? request.getSubject() : "");
         lesson.setNote(StudentService.defaultText(request.getNote(), "学员在线约课"));
         student.getProgressLogs().add("预约练车：" + request.getLessonDate() + " " + request.getTimeRange());
         studentRepository.save(student);
