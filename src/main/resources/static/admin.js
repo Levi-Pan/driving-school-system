@@ -239,7 +239,6 @@ function renderReviewList() {
         actions += `<button class="danger" onclick="reviewStudent(${student.id}, false)">不通过</button></div>`;
         if (isApproved && student.registrationFormGenerated) {
             actions += `<div class="actions" style="margin-top:6px"><button class="ghost" onclick="showDoc(${student.id}, 'registration')">报名表</button>`;
-            actions += `<button class="ghost" onclick="showDoc(${student.id}, 'medical')">体检表</button>`;
             actions += `<button class="ghost" onclick="showDoc(${student.id}, 'ticket')">准考证</button></div>`;
         }
 
@@ -609,6 +608,10 @@ function renderAdminExamList() {
         if (isApproved) {
             actions += `<button class="ghost" onclick="openScoreDialog(${exam.id})">录入成绩</button>`;
         }
+        // 已生成准考证（审核通过的考试报名）→ 显示准考证按钮
+        if (exam.ticketGenerated) {
+            actions += `<button class="ghost" onclick="showExamTicket(${exam.id})">准考证</button>`;
+        }
 
         const makeupTag = exam.makeup ? `<span class="tag warn">补考</span>` : "";
         const passedTag = hasScore ? (exam.passed ? `<span class="tag">合格</span>` : `<span class="tag bad">不合格</span>`) : "";
@@ -661,8 +664,12 @@ async function reviewStudent(id, approved) {
         showResultDialog("操作失败", "未找到该学员信息");
         return;
     }
-    if (student.status !== "待复审") {
-        showResultDialog("无法操作", "该学员已审核过，当前状态为「" + student.status + "」，不能重复审核。");
+    // 允许对"待复审"和"初审驳回"的学员进行复审（管理员可人工推翻系统初审结果）
+    if (student.status !== "待复审" && student.status !== "初审驳回") {
+        const msg = student.status === "审核驳回"
+            ? "该学员已被复审驳回，学员需修改后重新提交。"
+            : "该学员已完成复审，当前状态为「" + student.status + "」。";
+        showResultDialog("无法操作", msg);
         return;
     }
     if (approved) {
@@ -670,7 +677,7 @@ async function reviewStudent(id, approved) {
         showResultDialog("确认审核通过", "确定要通过学员「" + student.name + "」的报名审核吗？通过后将自动生成报名材料。", async () => {
             // 再次检查状态（防止在弹窗等待期间状态已改变）
             const currentStudent = state.students.find((s) => s.id === id);
-            if (!currentStudent || currentStudent.status !== "待复审") {
+            if (!currentStudent || (currentStudent.status !== "待复审" && currentStudent.status !== "初审驳回")) {
                 showResultDialog("无法操作", "该学员当前状态已变更，不能进行审核操作。");
                 return;
             }
@@ -708,7 +715,7 @@ async function confirmRejectStudent() {
         showResultDialog("操作失败", "未找到该学员信息");
         return;
     }
-    if (student.status !== "待复审") {
+    if (student.status !== "待复审" && student.status !== "初审驳回") {
         $("#rejectDialog").close();
         pendingRejectStudentId = null;
         showResultDialog("无法操作", "该学员当前状态为「" + student.status + "」，已不能进行驳回操作。");

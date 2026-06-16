@@ -3,7 +3,9 @@ package com.example.drivingschool.service;
 import com.example.drivingschool.dto.ProgressRequest;
 import com.example.drivingschool.dto.ReviewRequest;
 import com.example.drivingschool.dto.StudentApplicationRequest;
+import com.example.drivingschool.model.ExamRecord;
 import com.example.drivingschool.model.Student;
+import com.example.drivingschool.repository.ExamRecordRepository;
 import com.example.drivingschool.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,16 +24,34 @@ import java.util.NoSuchElementException;
 @Transactional
 public class StudentService {
     private final StudentRepository studentRepository;
+    private final ExamRecordRepository examRecordRepository;
 
-    public StudentService(StudentRepository studentRepository) {
+    public StudentService(StudentRepository studentRepository, ExamRecordRepository examRecordRepository) {
         this.studentRepository = studentRepository;
+        this.examRecordRepository = examRecordRepository;
     }
 
     public Student submitApplication(StudentApplicationRequest request) {
+        // 防重复报名：查找同名的已有报名记录
+        var existing = studentRepository.findAll().stream()
+                .filter(s -> request.getName() != null && request.getName().equals(s.getName()))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            Student s = existing.get();
+            if (!"初审驳回".equals(s.getStatus()) && !"审核驳回".equals(s.getStatus())) {
+                // 已有未驳回的报名 → 拒绝重复提交
+                throw new IllegalArgumentException("你已经提交过报名申请（当前状态：" + s.getStatus() + "），请勿重复提交");
+            }
+            // 已驳回 → 复用原记录重新提交
+            return resubmitApplication(s.getId(), request);
+        }
+
         Student student = new Student();
         student.setName(request.getName());
         student.setIdCard(request.getIdCard());
         student.setPhone(request.getPhone());
+        student.setGender(request.getGender());
         student.setAddress(request.getAddress());
         student.setVehicleType(request.getVehicleType());
         student.setAge(request.getAge());
@@ -69,8 +89,11 @@ public class StudentService {
 
     public Student reviewStudent(Long id, ReviewRequest request) {
         Student student = requireStudent(id);
-        if (!"待复审".equals(student.getStatus())) {
-            throw new IllegalArgumentException("当前学员状态为「" + student.getStatus() + "」，无法进行复审操作");
+        String status = student.getStatus();
+        // 允许对"待复审"和"初审驳回"的学员进行复审（管理员可人工推翻系统初审结果）
+        if (!"待复审".equals(status) && !"初审驳回".equals(status)) {
+            throw new IllegalArgumentException("当前学员状态为「" + status + "」，无法进行复审操作。" +
+                ("审核驳回".equals(status) ? "该学员已被复审驳回，学员需修改后重新提交。" : "该学员已完成复审。"));
         }
         if (request.isApproved()) {
             student.setStatus("待分配");
@@ -96,6 +119,7 @@ public class StudentService {
         student.setName(request.getName());
         student.setIdCard(request.getIdCard());
         student.setPhone(request.getPhone());
+        student.setGender(request.getGender());
         student.setAddress(request.getAddress());
         student.setVehicleType(request.getVehicleType());
         student.setLicenseEligible(request.isLicenseEligible());
@@ -139,8 +163,12 @@ public class StudentService {
         doc.put("documentNo", "DOC-" + type.toUpperCase() + "-" + student.getId());
         doc.put("studentName", student.getName());
         doc.put("idCard", student.getIdCard());
+        doc.put("gender", student.getGender() != null ? student.getGender() : inferGenderFromIdCard(student.getIdCard()));
+        doc.put("phone", student.getPhone());
+        // 从身份证解析出生日期
+        String birthDate = inferBirthDateFromIdCard(student.getIdCard());
+        doc.put("birthDate", birthDate);
         doc.put("vehicleType", student.getVehicleType());
-        doc.put("status", student.getStatus());
         doc.put("generatedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         switch (type) {
             case "registration" -> doc.put("title", "机动车驾驶培训报名表");
@@ -152,6 +180,32 @@ public class StudentService {
     }
 
     // ========== 自动初审逻辑 ==========
+
+    /** 从身份证第17位推断性别：奇数=男，偶数=女 */
+    private String inferGenderFromIdCard(String idCard) {
+        if (idCard == null || !idCard.matches("^\\d{17}[\\dXx]$")) {
+            return "";
+        }
+        try {
+            int code = Integer.parseInt(idCard.substring(16, 17));
+            return code % 2 == 1 ? "男" : "女";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** 从身份证第7-14位解析出生日期，格式 yyyy-MM-dd */
+    private String inferBirthDateFromIdCard(String idCard) {
+        if (idCard == null || !idCard.matches("^\\d{17}[\\dXx]$")) {
+            return "";
+        }
+        try {
+            String birthStr = idCard.substring(6, 14);
+            return birthStr.substring(0, 4) + "-" + birthStr.substring(4, 6) + "-" + birthStr.substring(6, 8);
+        } catch (Exception e) {
+            return "";
+        }
+    }
 
     private boolean autoReview(Student student) {
         List<String> failures = new ArrayList<>();
@@ -171,6 +225,11 @@ public class StudentService {
                     age--;
                 }
                 student.setAge(age);
+                // 从身份证第17位推断性别：奇数=男，偶数=女
+                if (student.getGender() == null || student.getGender().isBlank()) {
+                    int genderCode = Integer.parseInt(idCard.substring(16, 17));
+                    student.setGender(genderCode % 2 == 1 ? "男" : "女");
+                }
                 if (age < 18 || age > 70) {
                     failures.add("年龄不符合要求（当前" + age + "岁，需18-70周岁）");
                 }
@@ -251,6 +310,13 @@ public class StudentService {
     }
 
     boolean canApplyExam(Student student, String subject) {
+        // 已通过的科目禁止重复报名
+        boolean alreadyPassed = examRecordRepository.findAll().stream()
+                .anyMatch(e -> e.getStudentId().equals(student.getId())
+                        && e.getSubject().equals(subject)
+                        && e.getPassed() != null && e.getPassed());
+        if (alreadyPassed) return false;
+
         double hours = getSubjectHours(student, subject);
         boolean hoursEnough = hours >= requiredHours(subject);
         return switch (subject) {

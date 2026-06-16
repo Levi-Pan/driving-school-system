@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -56,6 +57,11 @@ public class ExamController {
             return examService.filterExams(subject, status);
         }
         return examService.listExams();
+    }
+
+    @GetMapping("/exams/{id}/ticket")
+    public Map<String, String> examTicket(@PathVariable Long id) {
+        return examService.examTicket(id);
     }
 
     @PostMapping("/students/{id}/certificate")

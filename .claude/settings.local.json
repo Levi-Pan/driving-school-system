@@ -3,7 +3,8 @@
     "allow": [
       "Bash(mvn compile *)",
       "Bash(node -c src/main/resources/static/admin.js)",
-      "Bash(node -c src/main/resources/static/common.js)"
+      "Bash(node -c src/main/resources/static/common.js)",
+      "Bash(node -c src/main/resources/static/student.js)"
     ]
   }
 }

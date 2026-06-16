@@ -73,9 +73,67 @@ function bindStudentForms() {
 // ========== Student Render ==========
 
 function renderStudent() {
+    renderApplyForm();
     renderStudentStatus();
     renderStudentLessons();
     renderStudentExams();
+    renderStudentDocuments();
+}
+
+function renderApplyForm() {
+    const form = $("#applyForm");
+    const notice = $("#applyStatusNotice");
+    if (!form || !notice) return;
+
+    // 填充报考车型下拉（仅显示启用的车型，与管理端车型管理一致）
+    renderVehicleTypeSelect();
+
+    const student = currentAccountStudent();
+    // 没有报名记录 → 显示表单（首次报名）
+    if (!student) {
+        notice.innerHTML = "";
+        form.style.display = "";
+        return;
+    }
+
+    const status = student.status;
+    const waitingStatuses = ["待初审", "待复审"];
+    const approvedStatuses = ["待分配", "学习中", "可报名考试", "考试报名待审", "待考试", "补考安排中", "等待发证", "已发证"];
+    const rejectedStatuses = ["初审驳回", "审核驳回"];
+
+    if (waitingStatuses.includes(status)) {
+        // 待审核 → 隐藏表单，显示等待提示
+        form.style.display = "none";
+        notice.innerHTML = `
+            <article class="item single" style="border-left:3px solid #b7791f">
+                <div>
+                    <h3>📝 已经提交报名信息，请等待系统审核</h3>
+                    <p>你于 ${formatDateTime(student.createdAt)} 提交了报名申请，当前状态：${statusTag(status)}。</p>
+                    <p>自动初审结果：${student.autoReviewResult || "已通过"}</p>
+                    <p>请耐心等待管理员审核，审核通过后可在「我的进度」查看。如需查看其他信息，请切换上方标签。</p>
+                </div>
+            </article>`;
+    } else if (approvedStatuses.includes(status)) {
+        // 已通过 → 隐藏表单，显示已通过提示
+        form.style.display = "none";
+        notice.innerHTML = `
+            <article class="item single" style="border-left:3px solid #0f766e">
+                <div>
+                    <h3>✅ 报名已通过</h3>
+                    <p>你的报名申请已审核通过，无需重复提交。当前状态：${statusTag(status)}。</p>
+                    <p>请前往「我的进度」查看学习进度和教练分配情况。</p>
+                </div>
+            </article>`;
+    } else if (rejectedStatuses.includes(status)) {
+        // 被驳回 → 显示表单 + 驳回原因，允许重新提交
+        form.style.display = "";
+        notice.innerHTML = student.reviewOpinion
+            ? `<article class="item single" style="border-left:3px solid #842029"><div><h3>⚠️ 报名被驳回，请修改后重新提交</h3><p style="color:var(--coral)">驳回原因：${student.reviewOpinion}</p></div></article>`
+            : "";
+    } else {
+        form.style.display = "";
+        notice.innerHTML = "";
+    }
 }
 
 function renderStudentStatus() {
@@ -141,6 +199,58 @@ function renderStudentExams() {
 }
 
 // ========== Student Utility ==========
+
+function renderStudentDocuments() {
+    const container = $("#studentTicketList");
+    if (!container) return;
+
+    const student = currentAccountStudent();
+    if (!student) {
+        container.innerHTML = `<p class="muted">暂无报名记录，请先完成在线报名。</p>`;
+        return;
+    }
+
+    // 筛选该学员已审核通过的考试记录（ticketGenerated=true）
+    const tickets = state.exams.filter((exam) =>
+        exam.studentId === student.id && exam.ticketGenerated
+    );
+
+    if (!tickets.length) {
+        container.innerHTML = `<p class="muted">暂无已审核通过的考试报名，无法生成准考证。</p>`;
+        return;
+    }
+
+    container.innerHTML = tickets.map((exam) => `
+        <article class="item">
+            <div>
+                <h3>${exam.subject} 准考证 ${statusTag(exam.status)}</h3>
+                <p>考试时间：${formatDateTime(exam.examTime)} · 考场：${exam.venue || "—"}</p>
+            </div>
+            <div class="actions">
+                <button class="ghost" onclick="showExamTicket(${exam.id})">查看准考证</button>
+            </div>
+        </article>
+    `).join("");
+}
+
+/** 渲染车型下拉：从管理端车型管理同步，仅显示启用的车型 */
+function renderVehicleTypeSelect() {
+    const select = $("#vehicleTypeSelect");
+    if (!select) return;
+    const types = (state.vehicleTypes || []).filter((vt) => vt.enabled !== false);
+    if (!types.length) {
+        select.innerHTML = `<option value="">暂无可选车型</option>`;
+        return;
+    }
+    const currentValue = select.value;
+    select.innerHTML = types.map((vt) =>
+        `<option value="${vt.name}">${vt.name}${vt.description ? ` · ${vt.description}` : ""}</option>`
+    ).join("");
+    // 保留之前的选中（如果还存在）
+    if (currentValue && types.some((vt) => vt.name === currentValue)) {
+        select.value = currentValue;
+    }
+}
 
 async function cancelLesson(id) {
     try {

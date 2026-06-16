@@ -672,6 +672,97 @@ dialog::backdrop {
     margin-top: 24px;
 }
 
+/* ========== 准考证 A4 样式 ========== */
+.doc-sheet.ticket {
+    width: 210mm;
+    min-height: 297mm;
+    max-width: 100%;
+    padding: 15mm;
+    font-size: 14pt;
+    box-sizing: border-box;
+}
+
+.ticket-header {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.ticket-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.ticket-photo-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ticket-photo {
+    width: 100px;
+    height: 130px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+}
+
+.ticket-photo-placeholder {
+    width: 100px;
+    height: 130px;
+    border: 1px dashed var(--line);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--muted);
+    font-size: 12pt;
+}
+
+.ticket-section {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 2px solid var(--line);
+}
+
+.ticket-section h3 {
+    margin-bottom: 12px;
+    font-size: 13pt;
+    color: var(--ink);
+}
+
+.ticket-notice {
+    margin: 12px 0;
+    padding-left: 24px;
+    font-size: 12pt;
+    line-height: 1.6;
+}
+
+.ticket-notice li {
+    margin-bottom: 8px;
+}
+
+.ticket-footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 11pt;
+    color: var(--muted);
+}
+
+/* 打印样式 */
+@media print {
+    .doc-sheet.ticket {
+        box-shadow: none !important;
+        border: none !important;
+    }
+    body {
+        background: white !important;
+    }
+    aside, header, .top-actions, .dialog-actions, .dialog-head button {
+        display: none !important;
+    }
+}
+
 #toast {
     position: fixed;
     right: 22px;
