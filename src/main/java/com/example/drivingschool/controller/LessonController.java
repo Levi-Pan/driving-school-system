@@ -26,6 +26,11 @@ public class LessonController {
         return lessonService.bookLesson(request);
     }
 
+    @PostMapping("/lessons/{id}/complete")
+    public LessonBooking completeLesson(@PathVariable Long id) {
+        return lessonService.completeLesson(id);
+    }
+
     @PostMapping("/lessons/{id}/cancel")
     public LessonBooking cancelLesson(@PathVariable Long id) {
         return lessonService.cancelLesson(id);

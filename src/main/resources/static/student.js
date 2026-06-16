@@ -1,4 +1,4 @@
-// ========== Student Forms ==========
+﻿// ========== Student Forms ==========
 
 function bindStudentForms() {
     $("#applyForm")?.addEventListener("submit", async (event) => {

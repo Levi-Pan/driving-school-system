@@ -38,6 +38,18 @@ public class LessonService {
         return lessonBookingRepository.save(lesson);
     }
 
+    public LessonBooking completeLesson(Long lessonId) {
+        LessonBooking lesson = requireLesson(lessonId);
+        if (!"已预约".equals(lesson.getStatus())) {
+            throw new IllegalArgumentException("当前课程状态为「" + lesson.getStatus() + "」，无法完成教学");
+        }
+        lesson.setStatus("已完成");
+        Student student = requireStudent(lesson.getStudentId());
+        student.getProgressLogs().add("完成教学：" + lesson.getLessonDate() + " " + lesson.getTimeRange());
+        studentRepository.save(student);
+        return lessonBookingRepository.save(lesson);
+    }
+
     public LessonBooking cancelLesson(Long lessonId) {
         LessonBooking lesson = requireLesson(lessonId);
         lesson.setStatus("已取消");
