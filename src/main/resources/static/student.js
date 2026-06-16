@@ -73,6 +73,11 @@ function bindStudentForms() {
 // ========== Student Render ==========
 
 function renderStudent() {
+    // 从注册账号预填手机号
+    const phoneInput = document.querySelector("#applyForm [name=phone]");
+    if (phoneInput && state.currentAccount?.phone) {
+        phoneInput.value = state.currentAccount.phone;
+    }
     renderApplyForm();
     renderStudentStatus();
     renderStudentLessons();
@@ -153,7 +158,7 @@ function renderStudentStatus() {
         <article class="item single">
             <div>
                 <h3>${student.name} ${statusTag(student.status)}</h3>
-                <p>报考车型：${student.vehicleType} · 学习阶段：${student.stage} · 学时：①${student.subjectOneHours || 0} / ②${student.subjectTwoHours || 0} / ③${student.subjectThreeHours || 0} / ④${student.subjectFourHours || 0}</p>
+                <p>电话：${student.phone || state.currentAccount?.phone || "未设置"} · 报考车型：${student.vehicleType} · 学习阶段：${student.stage} · 学时：①${student.subjectOneHours || 0} / ②${student.subjectTwoHours || 0} / ③${student.subjectThreeHours || 0} / ④${student.subjectFourHours || 0}</p>
                 <p>自动初审：${student.autoReviewResult}</p>
                 ${rejectReason}
                 <p>教练：${coach ? `${coach.name}（${coach.phone}，评分 ${coach.rating}）` : "暂未分配"}</p>

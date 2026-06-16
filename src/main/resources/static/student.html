@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -41,7 +41,7 @@
                     <label>性别<select name="gender"><option>男</option><option>女</option></select></label>
                     <label>出生日期<input name="birthDate" type="date"></label>
                     <label>年龄<input name="age" type="number" min="18" max="70" value="24"></label>
-                    <label>电话<input name="phone" id="applicationPhone" required placeholder="自动读取注册手机号"></label>
+                    <label>电话<input name="phone" required ></label>
                     <label>地址<input name="address" required value="南京市玄武区"></label>
                     <label>报考车型<select name="vehicleType" id="vehicleTypeSelect"><option value="">加载中...</option></select></label>
                     <label class="check"><input name="licenseEligible" type="checkbox" checked> 准驾资格符合</label>
@@ -126,18 +126,13 @@
     (function () {
         const nameInput = document.querySelector("#applicationName");
         const nameText = document.querySelector("#applicationNameText");
-        const phoneInput = document.querySelector("#applicationPhone");
 
-        function showAccount(account) {
-            const name = (account && account.name) || "";
-            if (nameInput && nameText) {
-                nameInput.value = name;
-                nameText.textContent = name || "未获取到注册姓名，请重新登录";
+        function showName(name) {
+            if (!nameInput || !nameText) {
+                return;
             }
-            // 用注册时的手机号回填报名表单
-            if (phoneInput && account && account.phone) {
-                phoneInput.value = account.phone;
-            }
+            nameInput.value = name || "";
+            nameText.textContent = name || "未获取到注册姓名，请重新登录";
         }
 
         function remember(account) {
@@ -147,16 +142,15 @@
             localStorage.setItem("currentAccount", JSON.stringify({
                 username: account.username,
                 name: account.name,
-                role: account.role,
-                phone: account.phone
+                role: account.role
             }));
         }
 
-        async function loadAccount() {
+        async function loadName() {
             let remembered = null;
             try {
                 remembered = JSON.parse(localStorage.getItem("currentAccount")) || null;
-                showAccount(remembered);
+                showName(remembered && remembered.name);
             } catch (error) {
                 remembered = null;
             }
@@ -176,16 +170,16 @@
                     }
                 }
                 remember(account);
-                showAccount(account);
+                showName(account && account.name);
             } catch (error) {
-                showAccount(remembered);
+                showName(remembered && remembered.name);
             }
         }
 
-        loadAccount();
+        loadName();
     })();
 </script>
-<script src="/common.js?v=2"></script>
-<script src="/student.js?v=2"></script>
+<script src="/common.js"></script>
+<script src="/student.js"></script>
 </body>
 </html>
