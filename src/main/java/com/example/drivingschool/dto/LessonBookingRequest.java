@@ -7,6 +7,7 @@ public class LessonBookingRequest {
     private LocalDate lessonDate;
     private String timeRange;
     private String note;
+    private String subject;
 
     public Long getStudentId() {
         return studentId;
@@ -39,4 +40,7 @@ public class LessonBookingRequest {
     public void setNote(String note) {
         this.note = note;
     }
+
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
 }

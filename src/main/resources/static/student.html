@@ -74,9 +74,11 @@
     <section id="booking" class="view">
         <section class="panel">
             <div class="panel-title"><h2>在线约课 / 取消约课</h2></div>
+            <div id="bookingCoachInfo"></div>
             <form id="lessonForm" class="form-grid">
                 <label>日期<input name="lessonDate" type="date"></label>
                 <label>时段<select name="timeRange"><option>09:00-11:00</option><option>14:00-16:00</option><option>18:00-20:00</option></select></label>
+                <label>科目<select name="subject"><option value="科目一">科目一</option><option value="科目二">科目二</option><option value="科目三">科目三</option><option value="科目四">科目四</option></select></label>
                 <label>备注<input name="note" value="在线约课"></label>
                 <button class="primary" type="submit">提交约课</button>
             </form>

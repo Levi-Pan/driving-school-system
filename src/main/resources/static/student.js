@@ -98,6 +98,7 @@ async function renderStudent() {
     renderApplyForm();
     renderVehicleTypeSelect(); // 后备
     renderStudentStatus();
+    renderBookingCoachInfo();
     renderStudentLessons();
     renderStudentExams();
     renderStudentDocuments();
@@ -184,6 +185,39 @@ function renderStudentStatus() {
             </div>
         </article>
     `;
+}
+
+
+function renderBookingCoachInfo() {
+    var el = document.getElementById("bookingCoachInfo");
+    if (!el) return;
+    var student = currentAccountStudent();
+    if (!student || !student.coachId) {
+        el.innerHTML = '<div class="info-card warn"><p>暂未分配教练，无法约课。</p></div>';
+        return;
+    }
+    var coach = state.coaches.find(function(c) { return c.id === student.coachId; });
+    if (!coach) {
+        el.innerHTML = '<div class="info-card warn"><p>暂未分配教练，无法约课。</p></div>';
+        return;
+    }
+    var freeTimeHtml = (coach.freeTimes && coach.freeTimes.length > 0)
+        ? coach.freeTimes.join("、")
+        : "暂未设置";
+    el.innerHTML = '<div class="info-card" style="background:#f0f7ff;border:1px solid #bdd3eb;border-radius:6px;padding:10px 14px;margin-bottom:12px">' +
+        '<div style="font-weight:600;font-size:14px;margin-bottom:6px">' +
+        '<span style="color:#1a56db">我的教练</span>' +
+        '</div>' +
+        '<div style="font-size:13px;line-height:1.7;color:#333">' +
+        '<span>' + coach.name + '</span>' +
+        '</div>' +
+        '<div style="font-size:13px;line-height:1.7;color:#666">' +
+        '<span>' + (coach.phone || "未设置") + '</span>' +
+        '</div>' +
+        '<div style="font-size:13px;line-height:1.7;color:#666;margin-top:2px">' +
+        '<span>' + freeTimeHtml + '</span>' +
+        '</div>' +
+        '</div>';
 }
 
 function renderStudentLessons() {
