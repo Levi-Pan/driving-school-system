@@ -34,13 +34,16 @@
         <div class="layout">
             <section class="panel">
                 <div class="panel-title"><h2>在线报名</h2><span class="muted">提交后进入待审核</span></div>
+                <div id="applyStatusNotice"></div>
                 <form id="applyForm" class="form-grid compact">
                     <label>姓名<span class="readonly-value" id="applicationNameText">正在读取注册姓名...</span><input name="name" id="applicationName" type="hidden" required></label>
                     <label>身份证<input name="idCard" required value="320105200201011234"></label>
+                    <label>性别<select name="gender"><option>男</option><option>女</option></select></label>
+                    <label>出生日期<input name="birthDate" type="date"></label>
+                    <label>年龄<input name="age" type="number" min="18" max="70" value="24"></label>
                     <label>电话<input name="phone" required value="13900009999"></label>
                     <label>地址<input name="address" required value="南京市玄武区"></label>
-                    <label>报考车型<select name="vehicleType"><option>C1</option><option>C2</option></select></label>
-                    <label>年龄<input name="age" type="number" min="18" value="24"></label>
+                    <label>报考车型<select name="vehicleType" id="vehicleTypeSelect"><option value="">加载中...</option></select></label>
                     <label class="check"><input name="licenseEligible" type="checkbox" checked> 准驾资格符合</label>
                     <label>体检状态<select name="medicalStatus"><option>合格</option><option>待补充</option><option>不合格</option></select></label>
                     <label class="upload-field">身份证照片
@@ -98,9 +101,10 @@
             <div class="panel-title"><h2>报名材料预览打印</h2><span class="muted">当前登录学员</span></div>
             <div class="actions left">
                 <button class="ghost" data-doc="registration">报名表</button>
-                <button class="ghost" data-doc="medical">体检表</button>
-                <button class="ghost" data-doc="ticket">准考证</button>
             </div>
+            <h3 style="margin-top:20px;font-size:13pt">考试准考证</h3>
+            <p class="muted">以下是你已审核通过的考试报名，点击查看对应科目的准考证。</p>
+            <div id="studentTicketList" class="item-list spaced"></div>
         </section>
     </section>
 </main>

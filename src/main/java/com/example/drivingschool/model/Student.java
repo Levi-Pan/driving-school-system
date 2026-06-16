@@ -24,6 +24,7 @@ public class Student {
     private String name;
     private String idCard;
     private String phone;
+    private String gender; // 性别：男/女
     private String address;
     private String vehicleType;
     private int age;
@@ -90,6 +91,14 @@ public class Student {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public String getAddress() {

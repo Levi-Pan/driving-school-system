@@ -24,6 +24,7 @@ public class ExamRecord {
     private String venue = "";
     private boolean makeup;
     private java.math.BigDecimal makeupFee;
+    private boolean ticketGenerated; // 准考证是否已生成（审核通过时设为 true）
 
     public Long getId() {
         return id;
@@ -111,5 +112,13 @@ public class ExamRecord {
 
     public void setMakeupFee(java.math.BigDecimal makeupFee) {
         this.makeupFee = makeupFee;
+    }
+
+    public boolean isTicketGenerated() {
+        return ticketGenerated;
+    }
+
+    public void setTicketGenerated(boolean ticketGenerated) {
+        this.ticketGenerated = ticketGenerated;
     }
 }

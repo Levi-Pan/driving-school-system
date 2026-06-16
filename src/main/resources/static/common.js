@@ -471,10 +471,69 @@ async function showDoc(studentId, type) {
             <h2>${doc.title}</h2>
             <div class="doc-row"><strong>材料编号</strong><span>${doc.documentNo}</span></div>
             <div class="doc-row"><strong>姓名</strong><span>${doc.studentName}</span></div>
+            <div class="doc-row"><strong>性别</strong><span>${doc.gender || "—"}</span></div>
+            <div class="doc-row"><strong>出生日期</strong><span>${doc.birthDate || "—"}</span></div>
             <div class="doc-row"><strong>身份证</strong><span>${doc.idCard}</span></div>
+            <div class="doc-row"><strong>联系电话</strong><span>${doc.phone || "—"}</span></div>
             <div class="doc-row"><strong>报考车型</strong><span>${doc.vehicleType}</span></div>
-            <div class="doc-row"><strong>业务状态</strong><span>${doc.status}</span></div>
             <div class="doc-row"><strong>生成时间</strong><span>${doc.generatedAt}</span></div>
+            <p class="muted doc-note">本页支持浏览器打印，并可在打印对话框中另存为 PDF。</p>
+        </section>
+    `;
+    $("#docDialog").showModal();
+}
+
+async function showExamTicket(examId) {
+    if (!examId) {
+        toast("考试记录不存在");
+        return;
+    }
+    const ticket = await api(`/api/exams/${examId}/ticket`);
+    state.currentDoc = ticket;
+    $("#docTitle").textContent = "机动车驾驶证考试准考证";
+
+    const photoHtml = ticket.photo && ticket.photo.startsWith("/uploads/")
+        ? `<img src="${ticket.photo}" alt="证件照片" class="ticket-photo">`
+        : `<div class="ticket-photo-placeholder">照片</div>`;
+
+    $("#docPreview").innerHTML = `
+        <section class="doc-sheet ticket">
+            <h2>机动车驾驶证考试准考证</h2>
+            <div class="ticket-header">
+                <div class="ticket-info">
+                    <div class="doc-row"><strong>姓名</strong><span>${ticket.studentName}</span></div>
+                    <div class="doc-row"><strong>性别</strong><span>${ticket.gender || "—"}</span></div>
+                    <div class="doc-row"><strong>身份证号</strong><span>${ticket.idCard}</span></div>
+                    <div class="doc-row"><strong>报考车型</strong><span>${ticket.vehicleType}</span></div>
+                </div>
+                <div class="ticket-photo-box">${photoHtml}</div>
+            </div>
+            <div class="ticket-section">
+                <h3>考试安排</h3>
+                <div class="doc-row"><strong>考试科目</strong><span>${ticket.subject}</span></div>
+                <div class="doc-row"><strong>考试时间</strong><span>${ticket.examTime || "—"}</span></div>
+                <div class="doc-row"><strong>考场名称</strong><span>${ticket.venueName || "—"}</span></div>
+                <div class="doc-row"><strong>考场地址</strong><span>${ticket.venueAddress || "—"}</span></div>
+            </div>
+            <div class="ticket-section">
+                <h3>培训信息</h3>
+                <div class="doc-row"><strong>驾校名称</strong><span>${ticket.schoolName}</span></div>
+                <div class="doc-row"><strong>学时完成</strong><span>${ticket.hoursInfo}</span></div>
+            </div>
+            <div class="ticket-section">
+                <h3>考试须知</h3>
+                <ol class="ticket-notice">
+                    <li>请携带本人身份证原件，准时到达考场参加考试。</li>
+                    <li>考试开始前15分钟入场，迟到15分钟以上者不得进入考场。</li>
+                    <li>考试过程中禁止使用手机、智能手表等电子设备。</li>
+                    <li>请遵守考场纪律，服从工作人员安排，如有违规行为将取消考试资格。</li>
+                    <li>考试结束后请妥善保管准考证，成绩查询或补考时可能需要出示。</li>
+                </ol>
+            </div>
+            <div class="ticket-footer">
+                <p>准考证编号：${ticket.documentNo}</p>
+                <p>生成时间：${ticket.generatedAt}</p>
+            </div>
             <p class="muted doc-note">本页支持浏览器打印，并可在打印对话框中另存为 PDF。</p>
         </section>
     `;

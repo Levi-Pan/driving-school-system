@@ -4,6 +4,7 @@ public class StudentApplicationRequest {
     private String name;
     private String idCard;
     private String phone;
+    private String gender;
     private String address;
     private String vehicleType;
     private int age;
@@ -34,6 +35,14 @@ public class StudentApplicationRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public String getAddress() {
