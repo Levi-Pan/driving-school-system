@@ -145,7 +145,10 @@ function renderCoachLessons() {
                 <h3>${studentName(lesson.studentId)} ${statusTag(lesson.status)}</h3>
                 <p>${lesson.lessonDate} ${lesson.timeRange} · ${lesson.note}</p>
             </div>
-            <div class="actions"><button class="ghost" onclick="cancelCoachLesson('${lesson.id}')">取消约课</button></div>
+            <div class="actions">
+                ${lesson.status === "已预约" ? `<button class="primary" onclick="completeCoachLesson('${lesson.id}')">完成本次教学</button>` : ""}
+                ${lesson.status === "已预约" ? `<button class="ghost" onclick="cancelCoachLesson('${lesson.id}')">取消约课</button>` : ""}
+            </div>
         </article>
     `).join("") : `<p class="muted">暂无约课安排。</p>`;
 }
@@ -255,6 +258,18 @@ async function cancelCoachLesson(id) {
         showResultDialog("取消失败", error.message || "请稍后重试。");
     }
 }
+
+
+async function completeCoachLesson(id) {
+    try {
+        await api("/api/lessons/" + id + "/complete", { method: "POST" });
+        await loadAll();
+        showResultDialog("教学已完成", "本次教学已标记完成，记得在进度管理中录入学时。");
+    } catch (error) {
+        showResultDialog("操作失败", error.message || "请稍后重试。");
+    }
+}
+
 function setDefaultDates() {
     // Override common.js version - no date defaults needed
 }
