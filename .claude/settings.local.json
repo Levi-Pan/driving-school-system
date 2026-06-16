@@ -6,7 +6,8 @@
       "Bash(node -c src/main/resources/static/common.js)",
       "Bash(node -c src/main/resources/static/student.js)",
       "Bash(node -c src/main/resources/static/auth.js)",
-      "Bash(python _patch_coach.py)"
+      "Bash(python _patch_coach.py)",
+      "Bash(node *)"
     ]
   }
 }

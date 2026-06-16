@@ -12,6 +12,7 @@ import com.example.drivingschool.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -141,7 +142,8 @@ public class ExamService {
         }
         student.setCertificateStatus("已发证");
         student.setStatus("已发证");
-        student.getProgressLogs().add("证件已发放");
+        student.setLicenseIssuedDate(LocalDate.now());
+        student.getProgressLogs().add("证件已发放（发证日期：" + LocalDate.now() + "）");
         return studentRepository.save(student);
     }
 
@@ -303,5 +305,56 @@ public class ExamService {
                 (int) student.getSubjectTwoHours(),
                 (int) student.getSubjectThreeHours(),
                 (int) student.getSubjectFourHours());
+    }
+
+    // ========== 驾驶证 ==========
+
+    /**
+     * 生成驾驶证信息（仅已发证学员可查看）
+     * 含身份信息、驾驶资格、发证管理；有效期 6 年
+     */
+    @Transactional(readOnly = true)
+    public Map<String, String> driverLicense(Long studentId) {
+        Student student = studentService.getStudent(studentId);
+        if (!"已发证".equals(student.getCertificateStatus())) {
+            throw new IllegalArgumentException("该学员尚未登记发证，无法查看驾驶证");
+        }
+        Map<String, String> license = new LinkedHashMap<>();
+        license.put("documentNo", "驾驶证-" + studentId);
+
+        // 身份信息
+        license.put("name", student.getName());
+        license.put("gender", student.getGender() != null ? student.getGender() : inferGender(student.getIdCard()));
+        license.put("nationality", "中国");
+        license.put("birthDate", inferBirthDate(student.getIdCard()));
+        license.put("idCard", student.getIdCard()); // 证号 = 身份证号
+
+        // 驾驶资格
+        license.put("vehicleType", student.getVehicleType());
+        LocalDate issued = student.getLicenseIssuedDate();
+        license.put("issueDate", issued != null ? issued.toString() : "");
+        license.put("validFrom", issued != null ? issued.toString() : "");
+        license.put("validTo", issued != null ? issued.plusYears(6).toString() : "");
+        license.put("fileNo", "苏A驾" + String.format("%06d", studentId)); // 档案编号
+
+        // 发证管理
+        license.put("issuingAuthority", "南京市公安局交通管理局");
+        license.put("licenseNo", student.getIdCard()); // 证号
+        license.put("generatedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+
+        return license;
+    }
+
+    /** 从身份证第7-14位解析出生日期，格式 yyyy-MM-dd */
+    private String inferBirthDate(String idCard) {
+        if (idCard == null || !idCard.matches("^\\d{17}[\\dXx]$")) {
+            return "";
+        }
+        try {
+            String s = idCard.substring(6, 14);
+            return s.substring(0, 4) + "-" + s.substring(4, 6) + "-" + s.substring(6, 8);
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

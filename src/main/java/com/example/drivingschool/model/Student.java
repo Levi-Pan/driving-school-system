@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,7 @@ public class Student {
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private String certificateStatus = "未发证";
+    private LocalDate licenseIssuedDate; // 驾驶证发证日期（初次领证日期）
 
     public Long getId() {
         return id;
@@ -300,5 +302,13 @@ public class Student {
 
     public void setCertificateStatus(String certificateStatus) {
         this.certificateStatus = certificateStatus;
+    }
+
+    public LocalDate getLicenseIssuedDate() {
+        return licenseIssuedDate;
+    }
+
+    public void setLicenseIssuedDate(LocalDate licenseIssuedDate) {
+        this.licenseIssuedDate = licenseIssuedDate;
     }
 }

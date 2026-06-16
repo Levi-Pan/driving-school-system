@@ -464,6 +464,7 @@ function renderStudentManage() {
     $("#studentManageList").innerHTML = filtered.map((student) => {
         const coach = state.coaches.find((c) => c.id === student.coachId);
         const coachName = coach ? coach.name : "未分配";
+        const isWaitingCert = student.status === "等待发证" || student.certificateStatus === "待发证";
         return `
         <article class="item" style="cursor:pointer" onclick="showStudentDetail(${student.id})">
             <div>
@@ -471,7 +472,10 @@ function renderStudentManage() {
                 <p>身份证：${student.idCard} · 手机：${student.phone} · 车型：${student.vehicleType} · 教练：${coachName}</p>
                 <p>阶段：${student.stage} · 学时：①${student.subjectOneHours || 0}/12 ②${student.subjectTwoHours || 0}/12 ③${student.subjectThreeHours || 0}/34 ④${student.subjectFourHours || 0}/10</p>
             </div>
-            <div class="actions"><button class="ghost">查看详情</button></div>
+            <div class="actions">
+                ${isWaitingCert ? `<button class="primary" onclick="event.stopPropagation();openCertificateDialog(${student.id})">登记发证</button>` : ""}
+                <button class="ghost">查看详情</button>
+            </div>
         </article>`;
     }).join("");
 }
@@ -589,7 +593,8 @@ function renderAdminExamList() {
     const countEl = $("#examCount");
     if (countEl) countEl.textContent = `共 ${filtered.length} 条记录`;
     if (!filtered.length) {
-        $("#examList").innerHTML = `<p class="muted">暂无符合条件的考试记录。</p>`;
+        // 即使考试列表为空/被筛选空，发证登记区仍需显示
+        $("#examList").innerHTML = `<p class="muted">暂无符合条件的考试记录。</p>` + renderCertificateSection();
         return;
     }
     $("#examList").innerHTML = filtered.map((exam) => {

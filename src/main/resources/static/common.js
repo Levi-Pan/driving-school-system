@@ -453,8 +453,36 @@ function toast(message) {
 }
 
 function exportData(key) {
-    const data = state.stats?.[key] || [];
-    download(`${key}.json`, JSON.stringify(data, null, 2), "application/json");
+    const columnsMap = {
+        registrationsByMonth: ["月份", "报名人数"],
+        subjectPassRates: ["科目", "合格率(%)"],
+        coachWorkloads: ["教练", "带教学员数"],
+        statusCounts: ["学员状态", "人数"]
+    };
+    const data = state.stats?.[key];
+    const empty = !data || (Array.isArray(data) ? !data.length : !Object.keys(data).length);
+    if (empty) {
+        toast("暂无可导出的数据");
+        return;
+    }
+    const columns = columnsMap[key] || ["项目", "数值"];
+    let rows;
+    if (Array.isArray(data)) {
+        rows = data.map((item) => [item.name ?? "", item.students ?? item.value ?? ""]);
+    } else {
+        rows = Object.entries(data).map(([k, v]) => [k, v]);
+    }
+    const csv = toCSV([columns, ...rows]);
+    download(`${key}.csv`, csv, "text/csv;charset=utf-8");
+}
+
+/** 生成 CSV 文本（带 UTF-8 BOM，确保 Excel 正确识别中文） */
+function toCSV(rows) {
+    const escape = (v) => {
+        const s = String(v ?? "");
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    return "﻿" + rows.map((r) => r.map(escape).join(",")).join("\n");
 }
 
 function exportCurrentDoc() {
@@ -611,6 +639,49 @@ async function showStudentTicket(studentId, subject) {
             <div class="ticket-footer">
                 <p>准考证编号：${ticket.documentNo}</p>
                 <p>生成时间：${ticket.generatedAt}</p>
+            </div>
+            <p class="muted doc-note">本页支持浏览器打印，并可在打印对话框中另存为 PDF。</p>
+        </section>
+    `;
+    $("#docDialog").showModal();
+}
+
+async function showDriverLicense(studentId) {
+    if (!studentId) {
+        toast("学员信息不存在");
+        return;
+    }
+    const license = await api(`/api/students/${studentId}/license`);
+    state.currentDoc = license;
+    $("#docTitle").textContent = "机动车驾驶证";
+
+    $("#docPreview").innerHTML = `
+        <section class="doc-sheet ticket">
+            <h2>中华人民共和国机动车驾驶证</h2>
+            <div class="ticket-header">
+                <div class="ticket-info">
+                    <div class="doc-row"><strong>姓名</strong><span>${license.name}</span></div>
+                    <div class="doc-row"><strong>性别</strong><span>${license.gender || "—"}</span></div>
+                    <div class="doc-row"><strong>国籍</strong><span>${license.nationality}</span></div>
+                    <div class="doc-row"><strong>出生日期</strong><span>${license.birthDate || "—"}</span></div>
+                    <div class="doc-row"><strong>身份证号</strong><span>${license.idCard}</span></div>
+                </div>
+            </div>
+            <div class="ticket-section">
+                <h3>驾驶资格</h3>
+                <div class="doc-row"><strong>准驾车型</strong><span>${license.vehicleType}</span></div>
+                <div class="doc-row"><strong>初次领证日期</strong><span>${license.issueDate || "—"}</span></div>
+                <div class="doc-row"><strong>有效期限</strong><span>${license.validFrom || "—"} 至 ${license.validTo || "—"}</span></div>
+                <div class="doc-row"><strong>档案编号</strong><span>${license.fileNo}</span></div>
+            </div>
+            <div class="ticket-section">
+                <h3>发证管理</h3>
+                <div class="doc-row"><strong>证号</strong><span>${license.licenseNo}</span></div>
+                <div class="doc-row"><strong>发证机关</strong><span>${license.issuingAuthority}</span></div>
+            </div>
+            <div class="ticket-footer">
+                <p>证号：${license.licenseNo}</p>
+                <p>生成时间：${license.generatedAt}</p>
             </div>
             <p class="muted doc-note">本页支持浏览器打印，并可在打印对话框中另存为 PDF。</p>
         </section>

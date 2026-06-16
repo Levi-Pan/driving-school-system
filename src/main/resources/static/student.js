@@ -240,6 +240,26 @@ function renderStudentDocuments() {
             ${subjects.map((s) => `<button class="ghost" onclick="showStudentTicket(${student.id}, '${s}')">${s} 准考证</button>`).join("")}
         </div>
     `;
+
+    // 驾驶证区：仅已发证学员可查看
+    const licenseArea = $("#studentLicenseArea");
+    if (licenseArea) {
+        if (student.certificateStatus === "已发证") {
+            licenseArea.innerHTML = `
+                <article class="item">
+                    <div>
+                        <h3>机动车驾驶证 <span class="tag">已发证</span></h3>
+                        <p>准驾车型：${student.vehicleType || "—"} · 驾驶证已发放，点击查看详情。</p>
+                    </div>
+                    <div class="actions">
+                        <button class="ghost" onclick="showDriverLicense(${student.id})">查看驾驶证</button>
+                    </div>
+                </article>
+            `;
+        } else {
+            licenseArea.innerHTML = `<p class="muted">尚未发证。完成全部科目考试并由管理员登记发证后，可在此查看驾驶证。</p>`;
+        }
+    }
 }
 
 function renderExamVenues() {
