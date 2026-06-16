@@ -238,8 +238,7 @@ function renderReviewList() {
         actions += `<div class="actions"><button class="primary" onclick="reviewStudent(${student.id}, true)">通过</button>`;
         actions += `<button class="danger" onclick="reviewStudent(${student.id}, false)">不通过</button></div>`;
         if (isApproved && student.registrationFormGenerated) {
-            actions += `<div class="actions" style="margin-top:6px"><button class="ghost" onclick="showDoc(${student.id}, 'registration')">报名表</button>`;
-            actions += `<button class="ghost" onclick="showDoc(${student.id}, 'ticket')">准考证</button></div>`;
+            actions += `<div class="actions" style="margin-top:6px"><button class="ghost" onclick="showDoc(${student.id}, 'registration')">报名表</button></div>`;
         }
 
         // 材料图片预览（只显示真正上传过的文件，跳过种子数据假文件名）

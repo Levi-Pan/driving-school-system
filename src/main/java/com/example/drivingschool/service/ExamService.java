@@ -231,6 +231,66 @@ public class ExamService {
         return ticket;
     }
 
+    /**
+     * 按学员 + 科目生成准考证：
+     * 该科目有已审核通过（ticketGenerated）的考试记录 → 返回完整考试信息
+     * 该科目无 → hasExam=false，考试相关字段为空（不编造考试信息）
+     */
+    @Transactional(readOnly = true)
+    public Map<String, String> studentTicketBySubject(Long studentId, String subject) {
+        Student student = studentService.getStudent(studentId);
+        Map<String, String> ticket = new LinkedHashMap<>();
+
+        // 学员基本信息
+        ticket.put("documentNo", "准考证-" + studentId + "-" + subject);
+        ticket.put("studentName", student.getName());
+        ticket.put("idCard", student.getIdCard());
+        ticket.put("gender", student.getGender() != null ? student.getGender() : inferGender(student.getIdCard()));
+        ticket.put("photo", student.getIdPhotoName() != null ? student.getIdPhotoName() : "");
+        ticket.put("vehicleType", student.getVehicleType());
+        ticket.put("subject", subject);
+
+        // 查找该学员该科目已审核通过的最新考试记录
+        ExamRecord exam = examRecordRepository.findAll().stream()
+                .filter(e -> studentId.equals(e.getStudentId()))
+                .filter(e -> subject.equals(e.getSubject()))
+                .filter(ExamRecord::isTicketGenerated)
+                .max(Comparator.comparing(ExamRecord::getId))
+                .orElse(null);
+
+        if (exam != null) {
+            ticket.put("hasExam", "true");
+            ticket.put("examTime", exam.getExamTime() != null
+                    ? exam.getExamTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "");
+            String originalVenueName = exam.getVenue();
+            String finalVenueName = originalVenueName != null ? originalVenueName : "";
+            String venueAddress = "";
+            if (originalVenueName != null && !originalVenueName.isBlank()) {
+                ExamVenue venue = examVenueRepository.findAll().stream()
+                        .filter(v -> v.getName().equals(originalVenueName) || v.getId().toString().equals(originalVenueName))
+                        .findFirst().orElse(null);
+                if (venue != null) {
+                    finalVenueName = venue.getName();
+                    venueAddress = venue.getAddress() != null ? venue.getAddress() : "";
+                }
+            }
+            ticket.put("venueName", finalVenueName);
+            ticket.put("venueAddress", venueAddress);
+        } else {
+            ticket.put("hasExam", "false");
+            ticket.put("examTime", "");
+            ticket.put("venueName", "");
+            ticket.put("venueAddress", "");
+        }
+
+        // 培训信息
+        ticket.put("schoolName", "交大驾校");
+        ticket.put("hoursInfo", buildHoursInfo(student));
+        ticket.put("generatedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+
+        return ticket;
+    }
+
     private String inferGender(String idCard) {
         if (idCard == null || !idCard.matches("^\\d{17}[\\dXx]$")) return "";
         int code = Integer.parseInt(idCard.substring(16, 17));

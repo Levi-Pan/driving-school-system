@@ -232,27 +232,13 @@ function renderStudentDocuments() {
         return;
     }
 
-    // 筛选该学员已审核通过的考试记录（ticketGenerated=true）
-    const tickets = state.exams.filter((exam) =>
-        exam.studentId === student.id && exam.ticketGenerated
-    );
-
-    if (!tickets.length) {
-        container.innerHTML = `<p class="muted">暂无已审核通过的考试报名，无法生成准考证。</p>`;
-        return;
-    }
-
-    container.innerHTML = tickets.map((exam) => `
-        <article class="item">
-            <div>
-                <h3>${exam.subject} 准考证 ${statusTag(exam.status)}</h3>
-                <p>考试时间：${formatDateTime(exam.examTime)} · 考场：${exam.venue || "—"}</p>
-            </div>
-            <div class="actions">
-                <button class="ghost" onclick="showExamTicket(${exam.id})">查看准考证</button>
-            </div>
-        </article>
-    `).join("");
+    // 按科目查看准考证：每个科目独立一张，仅已报名成功（审核通过）的科目显示考试信息
+    const subjects = ["科目一", "科目二", "科目三", "科目四"];
+    container.innerHTML = `
+        <div class="actions left">
+            ${subjects.map((s) => `<button class="ghost" onclick="showStudentTicket(${student.id}, '${s}')">${s} 准考证</button>`).join("")}
+        </div>
+    `;
 }
 
 /** 渲染车型下拉：从管理端车型管理同步，仅显示启用的车型 */
