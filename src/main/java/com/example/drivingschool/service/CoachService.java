@@ -21,6 +21,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * 教练业务服务：教练增删改查、状态切换、账号关联与同步、分配/解绑、推荐算法（评分+空闲+带教数）。
+ */
 @Service
 @Transactional
 public class CoachService {

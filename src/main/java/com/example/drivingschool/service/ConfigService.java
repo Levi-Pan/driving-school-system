@@ -12,6 +12,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * 基础配置服务：车型与考场的增删改查、启用/停用、费用校验。
+ */
 @Service
 @Transactional
 public class ConfigService {

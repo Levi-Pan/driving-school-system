@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 材料文件控制器：报名照片、证件等文件的上传与读取（本地/S3 存储）。
+ */
 @RestController
 @RequestMapping("/api")
 public class MaterialController {

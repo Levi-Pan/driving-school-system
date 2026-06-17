@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 学时进度录入请求：学时数、科目、训练阶段、记录说明。
+ */
 public class ProgressRequest {
     private double hours;
     private String subject;

@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+/**
+ * 考试业务服务：考试报名（防重复+资格校验）、审核/驳回、成绩录入与合格判定、准考证生成、发证登记。
+ */
 @Service
 @Transactional
 public class ExamService {

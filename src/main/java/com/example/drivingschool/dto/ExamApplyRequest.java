@@ -2,6 +2,9 @@ package com.example.drivingschool.dto;
 
 import java.time.LocalDateTime;
 
+/**
+ * 考试报名请求：学员 ID、报考科目、考试时间、考场。
+ */
 public class ExamApplyRequest {
     private Long studentId;
     private String subject;

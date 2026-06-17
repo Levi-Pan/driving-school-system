@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
 
+/**
+ * 约课业务服务：学员预约练车、完成、取消，并写入学员进度日志。
+ */
 @Service
 @Transactional
 public class LessonService {

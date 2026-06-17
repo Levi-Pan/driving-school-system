@@ -25,6 +25,9 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * 材料文件存储服务：上传时校验图片类型并生成唯一文件名，按配置自动选择本地目录或 S3（对象存储）保存；读取时按 key 还原文件内容。
+ */
 @Service
 public class MaterialStorageService {
     private final StorageProperties storageProperties;

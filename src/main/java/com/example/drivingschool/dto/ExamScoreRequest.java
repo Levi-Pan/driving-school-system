@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 考试成绩录入请求：分数与备注。
+ */
 public class ExamScoreRequest {
     private int score;
     private String remark;

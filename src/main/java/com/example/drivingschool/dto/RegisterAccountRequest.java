@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 注册账号请求：账号、密码、姓名、角色、手机号。
+ */
 public class RegisterAccountRequest {
     private String username;
     private String password;

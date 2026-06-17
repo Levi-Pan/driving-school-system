@@ -9,6 +9,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+/**
+ * 全局异常处理器：统一拦截参数错误、资源不存在、静态资源 404 等异常，返回结构化错误信息。
+ */
 @RestControllerAdvice
 public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)

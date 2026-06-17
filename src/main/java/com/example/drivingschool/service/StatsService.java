@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 统计服务：首页看板数据、报名趋势、科目合格率、教练工作量、状态分布等聚合统计。
+ */
 @Service
 @Transactional(readOnly = true)
 public class StatsService {

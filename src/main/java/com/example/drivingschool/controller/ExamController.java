@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 考试控制器：考试报名/审核/驳回、成绩录入、准考证与驾驶证查看、首页统计。
+ */
 @RestController
 @RequestMapping("/api")
 public class ExamController {

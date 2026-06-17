@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 新增教练请求：姓名、手机号、准教车型、最大带教数、性别、教龄、简介、头像。
+ */
 public class CoachCreateRequest {
     private String name;
     private String phone;

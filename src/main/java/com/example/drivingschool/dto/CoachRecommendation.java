@@ -2,6 +2,9 @@ package com.example.drivingschool.dto;
 
 import com.example.drivingschool.model.Coach;
 
+/**
+ * 教练推荐结果（推荐算法输出）：教练信息、推荐评分、推荐理由。
+ */
 public class CoachRecommendation {
     private Coach coach;
     private double score;

@@ -3,6 +3,9 @@ package com.example.drivingschool.dto;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 首页看板统计响应：学员总数、各审核阶段人数、报名趋势、科目合格率、教练工作量、状态分布。
+ */
 public class DashboardStats {
     private long totalStudents;
     private long pendingReview;

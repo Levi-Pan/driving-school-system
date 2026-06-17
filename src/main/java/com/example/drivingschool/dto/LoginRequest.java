@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 登录请求：账号与密码。
+ */
 public class LoginRequest {
     private String username;
     private String password;

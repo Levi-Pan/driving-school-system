@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 学员控制器：报名申请、学员列表/筛选、初审与复审审核、学时进度录入、教练分配/解绑、发证登记。
+ */
 @RestController
 @RequestMapping("/api")
 public class StudentController {

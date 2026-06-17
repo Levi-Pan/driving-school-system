@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
+/**
+ * 账号与登录服务：账号注册（手机号唯一校验、密码加密）、登录验证、自注册教练自动建 Coach 实体。
+ */
 @Service
 @Transactional
 public class AuthService {

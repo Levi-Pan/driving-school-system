@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 教练控制器：教练增删改查、状态切换（在岗/暂停/离职）、手机号查重、换教练与推荐。
+ */
 @RestController
 @RequestMapping("/api")
 public class CoachController {

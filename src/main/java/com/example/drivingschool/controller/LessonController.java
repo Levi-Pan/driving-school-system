@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 约课控制器：学员预约练车、完成、取消、约课记录查询。
+ */
 @RestController
 @RequestMapping("/api")
 public class LessonController {

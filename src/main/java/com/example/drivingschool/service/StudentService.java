@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+/**
+ * 学员业务服务：报名提交（防重复）、初审/复审审核、学时进度、考试报名资格判断（分科学时+已过科目）、发证登记。
+ */
 @Service
 @Transactional
 public class StudentService {

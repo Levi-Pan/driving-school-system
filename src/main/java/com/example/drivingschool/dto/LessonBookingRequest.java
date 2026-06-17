@@ -2,6 +2,9 @@ package com.example.drivingschool.dto;
 
 import java.time.LocalDate;
 
+/**
+ * 约课请求：学员 ID、上课日期、时间段、备注、科目。
+ */
 public class LessonBookingRequest {
     private Long studentId;
     private LocalDate lessonDate;

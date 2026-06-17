@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 编辑教练请求：字段同新增但用包装类型，允许传 null 表示该项不修改。
+ */
 public class CoachUpdateRequest {
     private String name;
     private String phone;

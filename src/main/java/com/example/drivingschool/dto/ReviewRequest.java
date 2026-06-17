@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 报名审核请求：是否通过、审核意见。
+ */
 public class ReviewRequest {
     private boolean approved;
     private String opinion;

@@ -1,5 +1,8 @@
 package com.example.drivingschool.dto;
 
+/**
+ * 学员报名申请请求：姓名、身份证、手机号、性别、地址、报考车型、年龄、是否适考、体检状态、证件照/体检表文件名。
+ */
 public class StudentApplicationRequest {
     private String name;
     private String idCard;

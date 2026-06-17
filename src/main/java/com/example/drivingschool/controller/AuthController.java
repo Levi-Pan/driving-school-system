@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * 账号与登录控制器：账号注册、登录/登出、会话管理，含手机号唯一校验与密码加密。
+ */
 @RestController
 @RequestMapping("/api")
 public class AuthController {
@@ -62,7 +65,7 @@ public class AuthController {
         return authService.findAccountByUsername(username);
     }
 
-    @PutMapping("/auth/profile")
+    @PutMapping("/auth/profile")//更新教练端个人信息
     public Account updateProfile(HttpServletRequest request, @RequestBody Map<String, String> body) {
         Account account = (Account) request.getSession().getAttribute("account");
         if (account == null) throw new IllegalArgumentException("???");

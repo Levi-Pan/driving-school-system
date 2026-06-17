@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 基础配置控制器：驾驶车型与考场的增删改查、启用/停用。
+ */
 @RestController
 @RequestMapping("/api")
 public class ConfigController {
